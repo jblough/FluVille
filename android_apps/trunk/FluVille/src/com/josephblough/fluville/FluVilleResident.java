@@ -22,6 +22,16 @@ public class FluVilleResident extends AnimatedSprite {
 	private FluVilleCityActivity activity;
 	private Scene scene;
 	
+	public TMXObject home;
+	public TMXObject placeOfWork;
+	
+	// state variables
+	public boolean infected;
+	public boolean immunized;
+	public boolean hasFaceMask;
+	public int hoursOfSanitizerRemaining;
+	public int daysOfInfectionRemaining;
+	
 	public FluVilleResident(final FluVilleCityActivity activity, final Scene scene, final TMXObject origin, final TiledTextureRegion texture) {
 		super(origin.getX() + origin.getWidth() / 2 - texture.getTileWidth() / 2,
 				origin.getY() + origin.getHeight() / 2 - texture.getTileHeight() / 2, texture.clone());
@@ -29,13 +39,21 @@ public class FluVilleResident extends AnimatedSprite {
 		Log.d(TAG, "Creating FluVilleResident");
 		this.activity = activity;
 		this.scene = scene;
+		
+		this.home = origin;
+		this.infected = false;
+		this.immunized = false;
+		this.hasFaceMask = false;
+		this.hoursOfSanitizerRemaining = 0;
+		this.daysOfInfectionRemaining = 0;
+		
 	}
 	
 	public void setDestination(final TMXObject destination) {
 		final Path path = calculatePath(this, this.getX(), this.getY(), 
 				destination.getX() + MathUtils.random(0, destination.getWidth()), destination.getY());
 
-		this.registerEntityModifier(/*new LoopEntityModifier(*/new PathModifier(getRandomSpeed(), path, null, new IPathModifierListener() {
+		this.registerEntityModifier(new PathModifier(getRandomSpeed(), path, null, new IPathModifierListener() {
 			@Override
 			public void onWaypointPassed(final PathModifier pPathModifier, final IEntity pEntity, final int pWaypointIndex) {
 				float xPoints[] = pPathModifier.getPath().getCoordinatesX();
@@ -64,13 +82,10 @@ public class FluVilleResident extends AnimatedSprite {
 					}
 				}
 			}
-		}))/*)*/;
+		}));
 	}
 
 	private Path calculatePath(final BaseSprite actor, final float fromX, final float fromY, final float toX, final float toY) {
-		//return new Path(5).to(0, 160).to(0, 500).to(600, 500).to(600, 160).to(0, 160);
-		//return new Path(3).to(fromX, fromY).to(toX, toY).to(fromX, fromY);
-		
 		boolean leftPath = fromX < FluVilleCityActivity.CAMERA_WIDTH / 2;
 		boolean goingDown = fromY < toY;
 		boolean stopAtResidential = false;

@@ -24,6 +24,7 @@ import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadExcepti
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
 import org.anddev.andengine.input.touch.TouchEvent;
+import org.anddev.andengine.opengl.font.Font;
 import org.anddev.andengine.opengl.texture.Texture;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.region.TextureRegion;
@@ -32,6 +33,8 @@ import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.MathUtils;
 
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.util.Log;
 
 public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTouchListener {
@@ -42,7 +45,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	
 	//public static final int CAMERA_WIDTH = 1000;
 	//public static final int CAMERA_HEIGHT = 700;
-	public static final int CAMERA_WIDTH = 720;
+	public static final int CAMERA_WIDTH = 760;
 	public static final int CAMERA_HEIGHT = 480;
 	//public static final int CAMERA_WIDTH = 480;
 	//public static final int CAMERA_HEIGHT = 320;
@@ -80,15 +83,22 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 
 	private Texture mTexture;
 	public TiledTextureRegion mPlayerTextureRegion;
-	private TMXTiledMap mTMXTiledMap;
+	
+	public TMXTiledMap mTMXTiledMap;
 	private HashMap<String, TMXObject> mapObjects = new HashMap<String, TMXObject>();
+	
+	private Texture mMenuFontTexture;
+	public Font mMenuFont;
 	
 	private Texture mMenuItemsTexture;
 	public TextureRegion mImmunizationTextureRegion;
 	public TextureRegion mSanitizerTextureRegion;
 	//public TextureRegion mTissueTextureRegion;
-	//public TextureRegion mFaceMaskTextureRegion;
+	public TextureRegion mFaceMaskTextureRegion;
+	public TextureRegion mCrosshairsTextureRegion;
 
+	public GameState gameState;
+	
 	// ===========================================================
 	// Constructors
 	// ===========================================================
@@ -123,8 +133,20 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 				"gfx/syringe.png", 0, 0);
 		this.mSanitizerTextureRegion = TextureRegionFactory.createFromAsset(this.mMenuItemsTexture, this, 
 				"gfx/sanitizer.jpg", 0, 32);
+		this.mFaceMaskTextureRegion = TextureRegionFactory.createFromAsset(this.mMenuItemsTexture, this, 
+				"gfx/mask.png", 0, 64);
+		this.mCrosshairsTextureRegion = TextureRegionFactory.createFromAsset(this.mMenuItemsTexture, this, 
+				"gfx/crosshairs.png", 0, 96);
 		this.mEngine.getTextureManager().loadTexture(this.mMenuItemsTexture);
 
+		
+		this.mMenuFontTexture = new Texture(256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		//this.mMenuFont = new Font(this.mMenuFontTexture, Typeface.create(Typeface.MONOSPACE, Typeface.BOLD), 12, false, Color.WHITE);
+		this.mMenuFont = new Font(this.mMenuFontTexture, Typeface.create(Typeface.SERIF, Typeface.NORMAL), 12, true, Color.WHITE);
+
+		this.mEngine.getTextureManager().loadTexture(this.mMenuFontTexture);
+		this.mEngine.getFontManager().loadFont(this.mMenuFont);
+		
 		//HUD hud = new FluVilleCityHUD(this);
 		//this.mBoundChaseCamera.setHUD(hud);
 	}
@@ -199,6 +221,8 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		scene.setOnSceneTouchListener(this);
 		scene.setTouchAreaBindingEnabled(true);
 
+		gameState = new GameState();
+		
 		HUD hud = new FluVilleCityHUD(this);
 		this.mBoundChaseCamera.setHUD(hud);
 		
@@ -302,6 +326,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			}
 		});
 		scene.getLastChild().attachChild(player);
+		gameState.residents.add(player);
 	}
 
 	public TMXObject findLandmark(final String landmark) {
