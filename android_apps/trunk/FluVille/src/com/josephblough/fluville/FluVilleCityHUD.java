@@ -122,7 +122,7 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 		this.registerTouchArea(dragResidentMenuItem);
 		y += gap + 5;
 
-		final Sprite dragResidentMenuImage = new Sprite(0, 0, this.activity.mCrosshairsTextureRegion.clone());
+		final Sprite dragResidentMenuImage = new Sprite(0, 0, this.activity.mSendHomeTextureRegion.clone());
 		dragResidentMenuImage.setPosition(dragResidentMenuItem.getWidth() / 2 - dragResidentMenuImage.getWidth() / 2, 
 				dragResidentMenuItem.getHeight() / 2 - dragResidentMenuImage.getHeight() / 2);
 		dragResidentMenuItem.attachChild(dragResidentMenuImage);

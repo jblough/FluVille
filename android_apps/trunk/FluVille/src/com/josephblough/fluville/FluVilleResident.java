@@ -325,4 +325,8 @@ public class FluVilleResident extends AnimatedSprite {
 	public void giveFaceMask() {
 		hasFaceMask = true;
 	}
+	
+	public void recover() {
+		this.infected = false;
+	}
 }

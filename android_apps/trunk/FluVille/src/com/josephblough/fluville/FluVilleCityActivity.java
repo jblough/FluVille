@@ -82,8 +82,12 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	//private ZoomCamera mBoundChaseCamera;
 	private Camera mBoundChaseCamera;
 
-	private Texture mTexture;
+	private Texture mPlayerTexture;
 	public TiledTextureRegion mPlayerTextureRegion;
+	private Texture mInfectedPlayerTexture;
+	public TiledTextureRegion mInfectedPlayerTextureRegion;
+	private Texture mImmunizedPlayerTexture;
+	public TiledTextureRegion mImmunizedPlayerTextureRegion;
 	
 	public TMXTiledMap mTMXTiledMap;
 	private HashMap<String, TMXObject> mapObjects = new HashMap<String, TMXObject>();
@@ -96,7 +100,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	public TextureRegion mSanitizerTextureRegion;
 	//public TextureRegion mTissueTextureRegion;
 	public TextureRegion mFaceMaskTextureRegion;
-	public TextureRegion mCrosshairsTextureRegion;
+	public TextureRegion mSendHomeTextureRegion;
 
 	public GameState gameState;
 	
@@ -121,12 +125,17 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 
 	@Override
 	public void onLoadResources() {
-		this.mTexture = new Texture(256, 256, TextureOptions.DEFAULT);
-		//this.mPlayerTextureRegion = TextureRegionFactory.createTiledFromAsset(this.mTexture, this, "gfx/player.png", 0, 0, 3, 4); // 72x128
-		//this.mPlayerTextureRegion = TextureRegionFactory.createTiledFromAsset(this.mTexture, this, "gfx/character_boy.png", 0, 0, 3, 4); // 72x128
-		this.mPlayerTextureRegion = TextureRegionFactory.createTiledFromAsset(this.mTexture, this, "gfx/rpg_sprite_walk.png", 0, 0, 8, 4); // 72x128
+		this.mPlayerTexture = new Texture(256, 256, TextureOptions.DEFAULT);
+		this.mPlayerTextureRegion = TextureRegionFactory.createTiledFromAsset(this.mPlayerTexture, this, "gfx/rpg_sprite_walk.png", 0, 0, 8, 4); // 72x128
 
-		this.mEngine.getTextureManager().loadTexture(this.mTexture);
+		this.mInfectedPlayerTexture = new Texture(256, 256, TextureOptions.DEFAULT);
+		this.mInfectedPlayerTextureRegion = TextureRegionFactory.createTiledFromAsset(this.mInfectedPlayerTexture, this, "gfx/infected_sprite_walk.png", 0, 0, 8, 4); // 72x128
+
+		this.mImmunizedPlayerTexture = new Texture(256, 256, TextureOptions.DEFAULT);
+		this.mImmunizedPlayerTextureRegion = TextureRegionFactory.createTiledFromAsset(this.mImmunizedPlayerTexture, this, "gfx/immunized_sprite_walk.png", 0, 0, 8, 4); // 72x128
+		
+		this.mEngine.getTextureManager().loadTextures(this.mPlayerTexture, this.mInfectedPlayerTexture, this.mImmunizedPlayerTexture);
+		
 		
 		this.mMenuItemsTexture = new Texture(128, 128,
 				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
@@ -136,8 +145,8 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 				"gfx/sanitizer.jpg", 0, 32);
 		this.mFaceMaskTextureRegion = TextureRegionFactory.createFromAsset(this.mMenuItemsTexture, this, 
 				"gfx/mask.png", 0, 64);
-		this.mCrosshairsTextureRegion = TextureRegionFactory.createFromAsset(this.mMenuItemsTexture, this, 
-				"gfx/crosshairs.png", 0, 96);
+		this.mSendHomeTextureRegion = TextureRegionFactory.createFromAsset(this.mMenuItemsTexture, this, 
+				"gfx/ic_launcher_home.png", 0, 96);
 		this.mEngine.getTextureManager().loadTexture(this.mMenuItemsTexture);
 
 		
@@ -190,13 +199,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	@Override
 	public void onLoadComplete() {
 		for (int i=0; i<5; i++) {
-			this.mEngine.getScene().registerUpdateHandler(new TimerHandler(MathUtils.random(0.1f, 5.0f), new ITimerCallback() {
-
-				@Override
-				public void onTimePassed(TimerHandler pTimerHandler) {
-					addWalker();
-				}
-			}));
+			addWalker();
 		}
 
 		this.mEngine.registerUpdateHandler(new TimerHandler(SECONDS_PER_FLUVILLE_HOUR, true, new ITimerCallback() {
@@ -204,30 +207,84 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			@Override
 			public void onTimePassed(TimerHandler pTimerHandler) {
 				if (gameState.hourOfDay < 23) {
-					gameState.hourOfDay++;
-
-					for (FluVilleResident resident : gameState.residents) {
-						if (!resident.isWalking && !resident.isAtWork()) {
-							//Log.d(TAG, "Sending resident to work from home");
-							mEngine.getScene().getLastChild().attachChild(resident);
-							resident.walk(resident.placeOfWork);
-						}
-						else if (!resident.isWalking && resident.isAtWork()) {
-							// Go home
-							//Log.d(TAG, "Sending resident home from work");
-							mEngine.getScene().getLastChild().attachChild(resident);
-							resident.walk(resident.home);
-						}
-					}
+					incrementHour();
 				}
 				else {
-					gameState.day++;
-					gameState.hourOfDay = 0;
+					incrementDay();
 				}
 				
 				((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateClock();
 			}
 		}));
+	}
+	
+	private void incrementHour() {
+		gameState.hourOfDay++;
+
+		for (FluVilleResident resident : gameState.residents) {
+			// Decrease any accumulations that we're keeping track of for the resident
+			if (resident.hoursOfSanitizerRemaining > 0) {
+				resident.hoursOfSanitizerRemaining--;
+			}
+
+			// Get the residents walking again
+			if (!resident.isWalking && !resident.isAtWork()) {
+				//Log.d(TAG, "Sending resident to work from home");
+				mEngine.getScene().getLastChild().attachChild(resident);
+				resident.walk(resident.placeOfWork);
+			}
+			else if (!resident.isWalking && resident.isAtWork()) {
+				// Go home
+				//Log.d(TAG, "Sending resident home from work");
+				mEngine.getScene().getLastChild().attachChild(resident);
+				resident.walk(resident.home);
+			}
+		}
+	}
+	
+	private void incrementDay() {
+		gameState.day++;
+		gameState.hourOfDay = 0;
+
+		for (FluVilleResident resident : gameState.residents) {
+			// Decrease any accumulations that we're keeping track of for the resident
+			if (resident.daysOfInfectionRemaining > 0) {
+				resident.daysOfInfectionRemaining--;
+				if (resident.daysOfInfectionRemaining <= 0) {
+					resident.recover();
+				}
+			}
+			
+			// Sanitizer and face masks reset at the beginning of
+			//	each day
+			if (resident.hoursOfSanitizerRemaining > 0) {
+				resident.hoursOfSanitizerRemaining = 0;
+			}
+			if (resident.hasFaceMask) {
+				resident.hasFaceMask = false;
+			}
+		}
+		
+		// Increase flu shot vaccines, hand sanitizer doses, and face masks
+		//	available when appropriate
+		if (gameState.day % GameState.DAYS_BETWEEN_FLU_SHOT_REFILLS == 0) {
+			gameState.immunizationsRemaining += GameState.FLU_SHOT_REFILL_SIZE;
+			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateFluShotsLabel();
+		}
+		if (gameState.day % GameState.DAYS_BETWEEN_HAND_SANITIZER_REFILLS == 0) {
+			gameState.handSanitizerDosesRemaining += GameState.HAND_SANITIZER_REFILL_SIZE;
+			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateHandSanitizersLabel();
+		}
+		if (gameState.day % GameState.DAYS_BETWEEN_FACE_MASK_REFILLS == 0) {
+			gameState.faceMasksRemaining += GameState.FACE_MASK_REFILL_SIZE;
+			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateFaceMasksLabel();
+		}
+
+		// Add more residents
+		for (int i=0; i<5; i++) {
+			addWalker();
+		}
+		
 	}
 
 	@Override
@@ -260,7 +317,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	// Methods
 	// ===========================================================
 	public void immunizeResident(final FluVilleResident resident) {
-		if (!resident.immunized && gameState.immunizationsRemaining > 0) {
+		if (!resident.immunized && !resident.infected && gameState.immunizationsRemaining > 0) {
 			resident.immunize();
 			gameState.immunizationsRemaining--;
 			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateFluShotsLabel();
@@ -268,7 +325,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	}
 	
 	public void sanitizeResident(final FluVilleResident resident) {
-		if (gameState.handSanitizerDosesRemaining > 0) {
+		if (!resident.infected && gameState.handSanitizerDosesRemaining > 0) {
 			resident.applyHandSanitizer();
 			gameState.handSanitizerDosesRemaining--;
 			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateHandSanitizersLabel();
@@ -276,7 +333,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	}
 	
 	public void giveFacemaskToResident(final FluVilleResident resident) {
-		if (!resident.hasFaceMask && gameState.faceMasksRemaining > 0) {
+		if (!resident.hasFaceMask && !resident.infected && gameState.faceMasksRemaining > 0) {
 			resident.giveFaceMask();
 			gameState.faceMasksRemaining--;
 			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateFaceMasksLabel();
