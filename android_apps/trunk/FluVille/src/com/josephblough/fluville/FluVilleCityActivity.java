@@ -5,7 +5,6 @@ import java.util.HashMap;
 import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.camera.Camera;
 import org.anddev.andengine.engine.camera.hud.HUD;
-import org.anddev.andengine.engine.handler.IUpdateHandler;
 import org.anddev.andengine.engine.handler.timer.ITimerCallback;
 import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.engine.options.EngineOptions;
@@ -49,6 +48,8 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	public static final int CAMERA_HEIGHT = 480;
 	//public static final int CAMERA_WIDTH = 480;
 	//public static final int CAMERA_HEIGHT = 320;
+	
+	public static final float SECONDS_PER_FLUVILLE_HOUR = 5.0f;
 	
 	public static final String MAP_LANDMARK_LEFT_RESIDENTIAL_INTERSECTION = "TopLeftResidentialCorner";
 	public static final String MAP_LANDMARK_RIGHT_RESIDENTIAL_INTERSECTION = "TopRightResidentialCorner";
@@ -146,9 +147,6 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 
 		this.mEngine.getTextureManager().loadTexture(this.mMenuFontTexture);
 		this.mEngine.getFontManager().loadFont(this.mMenuFont);
-		
-		//HUD hud = new FluVilleCityHUD(this);
-		//this.mBoundChaseCamera.setHUD(hud);
 	}
 
 	@Override
@@ -162,30 +160,13 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 				public void onTMXTileWithPropertiesCreated(final TMXTiledMap pTMXTiledMap, final TMXLayer pTMXLayer, final TMXTile pTMXTile, final TMXProperties<TMXTileProperty> pTMXTileProperties) {
 				}
 			});
-			//this.mTMXTiledMap = tmxLoader.loadFromAsset(this, "tmx/desert.tmx");
-			//this.mTMXTiledMap = tmxLoader.loadFromAsset(this, "tmx/sewers.tmx");
-			//this.mTMXTiledMap = tmxLoader.loadFromAsset(this, "tmx/tiled.tmx");
 			this.mTMXTiledMap = tmxLoader.loadFromAsset(this, "tmx/smaller_tiled.tmx");
 		} catch (final TMXLoadException tmxle) {
 			Log.e(TAG, tmxle.getMessage(), tmxle);
 		}
 
-		//final TMXLayer tmxLayer = this.mTMXTiledMap.getTMXLayers().get(0);
-		//scene.getFirstChild().attachChild(tmxLayer);
-		//scene.getFirstChild().attachChild(this.mTMXTiledMap.getTMXLayers().get(1));
-		//int mapWidth = this.mTMXTiledMap.getTileColumns() * this.mTMXTiledMap.getTileWidth();
-		//int mapHeight = this.mTMXTiledMap.getTileRows() * this.mTMXTiledMap.getTileHeight();
 		for (TMXLayer tmxLayer : this.mTMXTiledMap.getTMXLayers()) {
-			//tmxLayer.setPosition((CAMERA_WIDTH - mapWidth) / 2, (CAMERA_HEIGHT - mapHeight) / 2);
 			scene.getLastChild().attachChild(tmxLayer);
-			/*int rows = tmxLayer.getTileRows();
-			int columns = tmxLayer.getTileColumns();
-			for (int row=0; row<rows; row++) {
-				for (int column=0;column<columns;column++) {
-					TMXTile tile = tmxLayer.getTMXTile(row, column);
-					tile.setGlobalTileID(this.mTMXTiledMap, 0);
-				}
-			}*/
 		}
 
 		for (TMXObjectGroup group : this.mTMXTiledMap.getTMXObjectGroups()) {
@@ -195,29 +176,6 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			}
 		}
 
-		/* Make the camera not exceed the bounds of the TMXEntity. */
-		/*this.mBoundChaseCamera.setBounds(0, this.mTMXTiledMap.getTMXLayers().get(0).getWidth(), 
-				0, this.mTMXTiledMap.getTMXLayers().get(0).getHeight());
-		this.mBoundChaseCamera.setBoundsEnabled(true);*/
-
-		/* Calculate the coordinates for the face, so its centered on the camera. */
-		//final int centerX = (CAMERA_WIDTH - this.mPlayerTextureRegion.getTileWidth()) / 2;
-		//final int centerY = (CAMERA_HEIGHT - this.mPlayerTextureRegion.getTileHeight()) / 2;
-
-		/*this.mScrollDetector = new SurfaceScrollDetector(this);
-		if(MultiTouch.isSupportedByAndroidVersion()) {
-			try {
-				this.mPinchZoomDetector = new PinchZoomDetector(this);
-			} catch (final MultiTouchException e) {
-				this.mPinchZoomDetector = null;
-			}
-		} else {
-			this.mPinchZoomDetector = null;
-		}*/
-		
-		//for (int i=0; i<5; i++)
-			//addWalker(scene);
-		
 		scene.setOnSceneTouchListener(this);
 		scene.setTouchAreaBindingEnabled(true);
 
@@ -240,92 +198,107 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 				}
 			}));
 		}
-	}
-/*
-	@Override
-	public void onScroll(ScrollDetector pScollDetector, TouchEvent pTouchEvent,
-			float pDistanceX, float pDistanceY) {
-		final float zoomFactor = this.mBoundChaseCamera.getZoomFactor();
-		this.mBoundChaseCamera.offsetCenter(-pDistanceX / zoomFactor, -pDistanceY / zoomFactor);
-	}
 
-	@Override
-	public void onPinchZoomStarted(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent) {
-		this.mPinchZoomStartedCameraZoomFactor = this.mBoundChaseCamera.getZoomFactor();
-	}
+		this.mEngine.registerUpdateHandler(new TimerHandler(SECONDS_PER_FLUVILLE_HOUR, true, new ITimerCallback() {
+			
+			@Override
+			public void onTimePassed(TimerHandler pTimerHandler) {
+				if (gameState.hourOfDay < 23) {
+					gameState.hourOfDay++;
 
-	@Override
-	public void onPinchZoom(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
-		this.mBoundChaseCamera.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+					for (FluVilleResident resident : gameState.residents) {
+						if (!resident.isWalking && !resident.isAtWork()) {
+							//Log.d(TAG, "Sending resident to work from home");
+							mEngine.getScene().getLastChild().attachChild(resident);
+							resident.walk(resident.placeOfWork);
+						}
+						else if (!resident.isWalking && resident.isAtWork()) {
+							// Go home
+							//Log.d(TAG, "Sending resident home from work");
+							mEngine.getScene().getLastChild().attachChild(resident);
+							resident.walk(resident.home);
+						}
+					}
+				}
+				else {
+					gameState.day++;
+					gameState.hourOfDay = 0;
+				}
+				
+				((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateClock();
+			}
+		}));
 	}
-
-	@Override
-	public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
-		this.mBoundChaseCamera.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor * pZoomFactor);
-	}
-*/
 
 	@Override
 	public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
-		/*if(this.mPinchZoomDetector != null) {
-			this.mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
-
-			if(this.mPinchZoomDetector.isZooming()) {
-				this.mScrollDetector.setEnabled(false);
-			} else {
-				if(pSceneTouchEvent.isActionDown()) {
-					this.mScrollDetector.setEnabled(true);
+		for (FluVilleResident resident : gameState.residents) {
+			if (resident.contains(pSceneTouchEvent.getX(), pSceneTouchEvent.getY())) {
+				Log.d(TAG, "Tapped on a resident");
+				switch (((FluVilleCityHUD)mBoundChaseCamera.getHUD()).currentMenuSelection) {
+				case FluVilleCityHUD.HUD_MENU_IMMUNIZATION:
+					immunizeResident(resident);
+					break;
+				case FluVilleCityHUD.HUD_MENU_SANITIZER:
+					sanitizeResident(resident);
+					break;
+				case FluVilleCityHUD.HUD_MENU_FACE_MASKS:
+					giveFacemaskToResident(resident);
+					break;
+				case FluVilleCityHUD.HUD_MENU_GRAB_RESIDENTS:
+					sendResidentHome(resident);
+					break;
 				}
-				this.mScrollDetector.onTouchEvent(pSceneTouchEvent);
+				return true;
 			}
-		} else {
-			this.mScrollDetector.onTouchEvent(pSceneTouchEvent);
-		}*/
+		}
 
-		return true;
+		return false;
 	}
 
 	// ===========================================================
 	// Methods
 	// ===========================================================
+	public void immunizeResident(final FluVilleResident resident) {
+		if (!resident.immunized && gameState.immunizationsRemaining > 0) {
+			resident.immunize();
+			gameState.immunizationsRemaining--;
+			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateFluShotsLabel();
+		}
+	}
+	
+	public void sanitizeResident(final FluVilleResident resident) {
+		if (gameState.handSanitizerDosesRemaining > 0) {
+			resident.applyHandSanitizer();
+			gameState.handSanitizerDosesRemaining--;
+			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateHandSanitizersLabel();
+		}
+	}
+	
+	public void giveFacemaskToResident(final FluVilleResident resident) {
+		if (!resident.hasFaceMask && gameState.faceMasksRemaining > 0) {
+			resident.giveFaceMask();
+			gameState.faceMasksRemaining--;
+			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateFaceMasksLabel();
+		}
+	}
+	
+	public void sendResidentHome(final FluVilleResident resident) {
+		Log.d(TAG, "Sending a resident home sick");
+		resident.sendHome();
+	}
+	
 	public void addWalker() {
 		addWalker(this.mEngine.getScene());
 	}
 	
 	private void addWalker(final Scene scene) {
-		/* Create the sprite and add it to the scene. */
-		//final AnimatedSprite player = new AnimatedSprite(centerX, centerY, this.mPlayerTextureRegion);
 		final TMXObject spawnPoint = getRandomOrigin();
 		final FluVilleResident player = new FluVilleResident(this, scene, spawnPoint, this.mPlayerTextureRegion);
-		//this.mBoundChaseCamera.setChaseEntity(player);
 
-		//final Path path = new Path(5).to(0, 160).to(0, 500).to(600, 500).to(600, 160).to(0, 160);
-		final TMXObject endPoint = getRandomDestination();
-		player.setDestination(endPoint);
+		player.setPlaceOfWork(getRandomDestination());
 		
-		/* Now we are going to create a rectangle that will  always highlight the tile below the feet of the pEntity. */
-		/*final Rectangle currentTileRectangle = new Rectangle(0, 0, this.mTMXTiledMap.getTileWidth(), this.mTMXTiledMap.getTileHeight());
-		currentTileRectangle.setColor(1, 0, 0, 0.25f);
-		scene.getLastChild().attachChild(currentTileRectangle);*/
-
-		scene.registerUpdateHandler(new IUpdateHandler() {
-			@Override
-			public void reset() { }
-
-			@Override
-			public void onUpdate(final float pSecondsElapsed) {
-				/* Get the scene-coordinates of the players feet. */
-				//final float[] playerFootCordinates = player.convertLocalToSceneCoordinates(12, 31);
-
-				/* Get the tile the feet of the player are currently waking on. */
-				/*final TMXTile tmxTile = tmxLayer.getTMXTileAt(playerFootCordinates[Constants.VERTEX_INDEX_X], playerFootCordinates[Constants.VERTEX_INDEX_Y]);
-				if(tmxTile != null) {
-					// tmxTile.setTextureRegion(null); <-- Rubber-style removing of tiles =D
-					currentTileRectangle.setPosition(tmxTile.getTileX(), tmxTile.getTileY());
-				}*/
-			}
-		});
-		scene.getLastChild().attachChild(player);
+		//scene.getLastChild().attachChild(player);
 		gameState.residents.add(player);
 	}
 

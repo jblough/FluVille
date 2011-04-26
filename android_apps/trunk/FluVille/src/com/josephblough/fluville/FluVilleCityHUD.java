@@ -172,7 +172,7 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 		return false;
 	}
 	
-	private void releaseWalkers() {
+	public void releaseWalkers() {
 		if (safeToReleaseMoreWalkers) {
 			Log.d(TAG, "Sending out resident");
 			safeToReleaseMoreWalkers = false;
@@ -230,5 +230,22 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 			this.faceMaskMenuItem.setColor(0, 0, 0);
 			break;
 		}
+	}
+	
+	public void updateClock() {
+		this.dayLabel.setText("Day: " + this.activity.gameState.day);
+		this.hourOfDayLabel.setText("Hour: " + this.activity.gameState.hourOfDay);
+	}
+	
+	public void updateFluShotsLabel() {
+		this.fluShotsRemainingLabel.setText("" + activity.gameState.immunizationsRemaining + " remaining");
+	}
+	
+	public void updateHandSanitizersLabel() {
+		this.handSanitizerRemainingLabel.setText("" + activity.gameState.handSanitizerDosesRemaining + " remaining");
+	}
+	
+	public void updateFaceMasksLabel() {
+		this.faceMasksRemainingLabel.setText("" + activity.gameState.faceMasksRemaining + " remaining");
 	}
 }

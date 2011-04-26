@@ -16,8 +16,8 @@ public class GameState {
 		day = 1;
 		hourOfDay = 0;
 		immunizationsRemaining = 10;
-		faceMasksRemaining = 0;
-		handSanitizerDosesRemaining = 0;
+		faceMasksRemaining = 10;
+		handSanitizerDosesRemaining = 10;
 		residents = new ArrayList<FluVilleResident>();
 	}
 }

@@ -7,9 +7,9 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXObject;
 import org.anddev.andengine.entity.modifier.PathModifier;
 import org.anddev.andengine.entity.modifier.PathModifier.IPathModifierListener;
 import org.anddev.andengine.entity.modifier.PathModifier.Path;
+import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
-import org.anddev.andengine.entity.sprite.BaseSprite;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.util.MathUtils;
 
@@ -19,6 +19,8 @@ public class FluVilleResident extends AnimatedSprite {
 
 	private static final String TAG = "FluVilleResident";
 
+	private static final int HOURS_OF_PROTECTION_FROM_HAND_SANITIZER = 5;
+	
 	private FluVilleCityActivity activity;
 	private Scene scene;
 	
@@ -31,6 +33,8 @@ public class FluVilleResident extends AnimatedSprite {
 	public boolean hasFaceMask;
 	public int hoursOfSanitizerRemaining;
 	public int daysOfInfectionRemaining;
+	public PathModifier pathOfTravel;
+	public boolean isWalking;
 	
 	public FluVilleResident(final FluVilleCityActivity activity, final Scene scene, final TMXObject origin, final TiledTextureRegion texture) {
 		super(origin.getX() + origin.getWidth() / 2 - texture.getTileWidth() / 2,
@@ -46,14 +50,22 @@ public class FluVilleResident extends AnimatedSprite {
 		this.hasFaceMask = false;
 		this.hoursOfSanitizerRemaining = 0;
 		this.daysOfInfectionRemaining = 0;
-		
+		this.isWalking = false;
+	}
+
+	public void walk() {
+		//Log.d(TAG, "walk");
+		walk(this.placeOfWork);
 	}
 	
-	public void setDestination(final TMXObject destination) {
-		final Path path = calculatePath(this, this.getX(), this.getY(), 
+	public void walk(final TMXObject destination) {
+		//Log.d(TAG, "walk to destination");
+		this.isWalking = true;
+		
+		final Path path = calculatePath(getX(), getY(), 
 				destination.getX() + MathUtils.random(0, destination.getWidth()), destination.getY());
 
-		this.registerEntityModifier(new PathModifier(getRandomSpeed(), path, null, new IPathModifierListener() {
+		this.pathOfTravel = new PathModifier(getRandomSpeed(), path, null, new IPathModifierListener() {
 			@Override
 			public void onWaypointPassed(final PathModifier pPathModifier, final IEntity pEntity, final int pWaypointIndex) {
 				float xPoints[] = pPathModifier.getPath().getCoordinatesX();
@@ -82,10 +94,12 @@ public class FluVilleResident extends AnimatedSprite {
 					}
 				}
 			}
-		}));
+		});
+		
+		this.registerEntityModifier(this.pathOfTravel);
 	}
 
-	private Path calculatePath(final BaseSprite actor, final float fromX, final float fromY, final float toX, final float toY) {
+	private Path calculatePath(final float fromX, final float fromY, final float toX, final float toY) {
 		boolean leftPath = fromX < FluVilleCityActivity.CAMERA_WIDTH / 2;
 		boolean goingDown = fromY < toY;
 		boolean stopAtResidential = false;
@@ -95,36 +109,37 @@ public class FluVilleResident extends AnimatedSprite {
 		int pathPoints = 2;
 		Path path = null;
 		final int leeway = 10;
+
+		TMXObject residentialObject = null;
+		TMXObject topObject = null;
+		TMXObject middleObject = null;
+		TMXObject bottomObject = null;
+
+		// Find the points on the map
+		if (leftPath) {
+			// Check the points in the following order:
+			//MAP_LANDMARK_BOTTOM_LEFT_INTERSECTION
+			bottomObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_BOTTOM_LEFT_INTERSECTION);
+			//MAP_LANDMARK_MIDDLE_LEFT_INTERSECTION
+			middleObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_MIDDLE_LEFT_INTERSECTION);
+			//MAP_LANDMARK_TOP_LEFT_INTERSECTION
+			topObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_TOP_LEFT_INTERSECTION);
+			//MAP_LANDMARK_LEFT_RESIDENTIAL_INTERSECTION
+			residentialObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_LEFT_RESIDENTIAL_INTERSECTION);
+		}
+		else {
+			// Check the points in the following order:
+			//MAP_LANDMARK_BOTTOM_RIGHT_INTERSECTION
+			bottomObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_BOTTOM_RIGHT_INTERSECTION);
+			//MAP_LANDMARK_MIDDLE_RIGHT_INTERSECTION
+			middleObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_MIDDLE_RIGHT_INTERSECTION);
+			//MAP_LANDMARK_TOP_RIGHT_INTERSECTION
+			topObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_TOP_RIGHT_INTERSECTION);
+			//MAP_LANDMARK_RIGHT_RESIDENTIAL_INTERSECTION
+			residentialObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_RIGHT_RESIDENTIAL_INTERSECTION);
+		}
+		
 		if (goingDown) {
-			TMXObject residentialObject = null;
-			TMXObject topObject = null;
-			TMXObject middleObject = null;
-			TMXObject bottomObject = null;
-			
-			// Find the points on the map
-			if (leftPath) {
-				// Check the points in the following order:
-				//MAP_LANDMARK_LEFT_RESIDENTIAL_INTERSECTION
-				residentialObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_LEFT_RESIDENTIAL_INTERSECTION);
-				//MAP_LANDMARK_TOP_LEFT_INTERSECTION
-				topObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_TOP_LEFT_INTERSECTION);
-				//MAP_LANDMARK_MIDDLE_LEFT_INTERSECTION
-				middleObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_MIDDLE_LEFT_INTERSECTION);
-				//MAP_LANDMARK_BOTTOM_LEFT_INTERSECTION
-				bottomObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_BOTTOM_LEFT_INTERSECTION);
-			}
-			else {
-				// Check the points in the following order:
-				//MAP_LANDMARK_RIGHT_RESIDENTIAL_INTERSECTION
-				residentialObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_RIGHT_RESIDENTIAL_INTERSECTION);
-				//MAP_LANDMARK_TOP_RIGHT_INTERSECTION
-				topObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_TOP_RIGHT_INTERSECTION);
-				//MAP_LANDMARK_MIDDLE_RIGHT_INTERSECTION
-				middleObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_MIDDLE_RIGHT_INTERSECTION);
-				//MAP_LANDMARK_BOTTOM_RIGHT_INTERSECTION
-				bottomObject = activity.findLandmark(FluVilleCityActivity.MAP_LANDMARK_BOTTOM_RIGHT_INTERSECTION);
-			}
-			
 			// Determine if we need to visit the points
 			//Log.d(TAG, "Residential comparing " + fromY + " to " + (residentialObject.getY() + residentialObject.getHeight()));
 			if (fromY < (residentialObject.getY() + residentialObject.getHeight()) &&
@@ -155,40 +170,66 @@ public class FluVilleResident extends AnimatedSprite {
 
 			// Now add the path points in the return value
 			path = new Path(pathPoints);
-			path.to(fromX - actor.getWidth() / 2, fromY - actor.getHeight() / 2);
+			path.to(fromX - getWidth() / 2, fromY - getHeight() / 2);
 			if (stopAtResidential)
-				addLandmarkToPath(actor, path, residentialObject);
+				addLandmarkToPath(path, residentialObject);
 			if (stopAtTop)
-				addLandmarkToPath(actor, path, topObject);
+				addLandmarkToPath(path, topObject);
 			if (stopAtMiddle)
-				addLandmarkToPath(actor, path, middleObject);
+				addLandmarkToPath(path, middleObject);
 			if (stopAtBottom)
-				addLandmarkToPath(actor, path, bottomObject);
-			path.to(toX - actor.getWidth() / 2, toY - actor.getHeight() / 2);
+				addLandmarkToPath(path, bottomObject);
+			path.to(toX - getWidth() / 2, toY - getHeight() / 2);
 		}
 		else {
-			if (leftPath) {
-				// Check the points in the following order:
-				//MAP_LANDMARK_BOTTOM_LEFT_INTERSECTION
-				//MAP_LANDMARK_MIDDLE_LEFT_INTERSECTION
-				//MAP_LANDMARK_TOP_LEFT_INTERSECTION
-				//MAP_LANDMARK_LEFT_RESIDENTIAL_INTERSECTION
+			// Determine if we need to visit the points
+			//Log.d(TAG, "Bottom comparing " + fromY + " to " + (bottomObject.getY() + bottomObject.getHeight()));
+			//Log.d(TAG, "   and " + toY + " > " + bottomObject.getY());
+			if (fromY + getHeight() + leeway > (bottomObject.getY()) &&
+					toY < bottomObject.getY() + bottomObject.getHeight()) {
+				pathPoints++;
+				stopAtBottom = true;
 			}
-			else {
-				// Check the points in the following order:
-				//MAP_LANDMARK_BOTTOM_RIGHT_INTERSECTION
-				//MAP_LANDMARK_MIDDLE_RIGHT_INTERSECTION
-				//MAP_LANDMARK_TOP_RIGHT_INTERSECTION
-				//MAP_LANDMARK_RIGHT_RESIDENTIAL_INTERSECTION
+			//Log.d(TAG, "Middle comparing " + fromY + " to " + (middleObject.getY() + middleObject.getHeight()));
+			//Log.d(TAG, "   and " + toY + " > " + middleObject.getY());
+			if (fromY + getHeight() +leeway > (middleObject.getY()) &&
+					toY < middleObject.getY() + middleObject.getHeight()) {
+				pathPoints++;
+				stopAtMiddle = true;
 			}
+			//Log.d(TAG, "Top comparing " + fromY + " to " + (topObject.getY() + topObject.getHeight()));
+			if (fromY + getHeight() + leeway > (topObject.getY()) &&
+					toY < topObject.getY() + topObject.getHeight()) {
+				pathPoints++;
+				stopAtTop = true;
+			}
+			//Log.d(TAG, "Residential comparing " + fromY + " to " + (residentialObject.getY() + residentialObject.getHeight()));
+			if (fromY + getHeight() + leeway > (residentialObject.getY()) &&
+					toY < residentialObject.getY() + residentialObject.getHeight()) {
+				pathPoints++;
+				stopAtResidential = true;
+			}
+
+			// Now add the path points in the return value
+			path = new Path(pathPoints);
+			path.to(fromX - getWidth() / 2, fromY - getHeight() / 2);
+			if (stopAtBottom)
+				addLandmarkToPath(path, bottomObject);
+			if (stopAtMiddle)
+				addLandmarkToPath(path, middleObject);
+			if (stopAtTop)
+				addLandmarkToPath(path, topObject);
+			if (stopAtResidential)
+				addLandmarkToPath(path, residentialObject);
+			path.to(toX - getWidth() / 2, toY - getHeight() / 2);
 		}
 		
 		return path;
 	}
 
-	private void addLandmarkToPath(final BaseSprite actor, final Path path, final TMXObject landmark) {
-		path.to(landmark.getX() + MathUtils.random(0, landmark.getWidth()) - actor.getWidth() / 2, 
-				landmark.getY() + MathUtils.random(0, landmark.getHeight()) - actor.getHeight() / 2);
+	private void addLandmarkToPath(final Path path, final TMXObject landmark) {
+		path.to(landmark.getX() + MathUtils.random(0, landmark.getWidth()) - getWidth() / 2, 
+				landmark.getY() + MathUtils.random(0, landmark.getHeight()) - getHeight() / 2);
 	}
 	
 	private void faceDownward() {
@@ -212,6 +253,8 @@ public class FluVilleResident extends AnimatedSprite {
 	}
 
 	private void reachedDestination() {
+		//this.isWalking = false;
+		
 		faceUpward();
 		//setVisible(false);
 		scene.registerUpdateHandler(new TimerHandler(0.1f, new ITimerCallback() {
@@ -223,6 +266,7 @@ public class FluVilleResident extends AnimatedSprite {
 					@Override
 					public void run() {
 						scene.getLastChild().detachChild(FluVilleResident.this);
+						isWalking = false;
 					}
 				});
 			}
@@ -231,5 +275,54 @@ public class FluVilleResident extends AnimatedSprite {
 	
 	private float getRandomSpeed() {
 		return MathUtils.random(10.0f, 15.0f);
+	}
+	
+	public void setPlaceOfWork(final TMXObject placeOfWork) {
+		/*Log.d(TAG, "Setting place of work X: " + placeOfWork.getX() + 
+				", place of work width: " + placeOfWork.getWidth());*/
+		this.placeOfWork = placeOfWork;
+	}
+	
+	public boolean isAtHome() {
+		Rectangle homeRectangle = new Rectangle(home.getX(), home.getY(), 
+				home.getWidth(), home.getHeight());
+		return homeRectangle.collidesWith(this);
+	}
+	
+	public boolean isAtWork() {
+		Rectangle workRectangle = new Rectangle(placeOfWork.getX(), placeOfWork.getY(), 
+				placeOfWork.getWidth(), placeOfWork.getHeight());
+		return workRectangle.collidesWith(this);
+	}
+	
+	public void sendHome() {
+		this.unregisterEntityModifier(this.pathOfTravel);
+		Path path = new Path(2);
+		path.to(getX() - getWidth() / 2, getY() - getHeight() / 2).
+			to(home.getX() + MathUtils.random(0, home.getWidth()) - getWidth() / 2, 
+				home.getY() + MathUtils.random(0, home.getHeight()) - getHeight() / 2);
+		registerEntityModifier(new PathModifier(0.5f, path, null, new IPathModifierListener() {
+			
+			@Override
+			public void onWaypointPassed(PathModifier pPathModifier, IEntity pEntity,
+					int pWaypointIndex) {
+				float xPoints[] = pPathModifier.getPath().getCoordinatesX();
+				if (pWaypointIndex >= (xPoints.length-1)) {
+					reachedDestination();
+				}
+			}
+		}));
+	}
+	
+	public void immunize() {
+		immunized = true;
+	}
+	
+	public void applyHandSanitizer() {
+		hoursOfSanitizerRemaining += HOURS_OF_PROTECTION_FROM_HAND_SANITIZER;
+	}
+	
+	public void giveFaceMask() {
+		hasFaceMask = true;
 	}
 }
