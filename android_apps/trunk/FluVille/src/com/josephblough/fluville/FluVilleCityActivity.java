@@ -224,7 +224,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		for (FluVilleResident resident : gameState.residents) {
 			// Decrease any accumulations that we're keeping track of for the resident
 			if (resident.hoursOfSanitizerRemaining > 0) {
-				resident.hoursOfSanitizerRemaining--;
+				resident.reduceSanitizerProtect();
 			}
 
 			// Get the residents walking again
@@ -255,18 +255,13 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 				}
 			}
 			
-			// Sanitizer and face masks reset at the beginning of
-			//	each day
+			// Reset sanitizer at the beginning of each day
 			if (resident.hoursOfSanitizerRemaining > 0) {
 				resident.hoursOfSanitizerRemaining = 0;
 			}
-			if (resident.hasFaceMask) {
-				resident.hasFaceMask = false;
-			}
 		}
 		
-		// Increase flu shot vaccines, hand sanitizer doses, and face masks
-		//	available when appropriate
+		// Increase flu shot vaccines, hand sanitizer doses available when appropriate
 		if (gameState.day % GameState.DAYS_BETWEEN_FLU_SHOT_REFILLS == 0) {
 			gameState.immunizationsRemaining += GameState.FLU_SHOT_REFILL_SIZE;
 			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateFluShotsLabel();
@@ -274,10 +269,6 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		if (gameState.day % GameState.DAYS_BETWEEN_HAND_SANITIZER_REFILLS == 0) {
 			gameState.handSanitizerDosesRemaining += GameState.HAND_SANITIZER_REFILL_SIZE;
 			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateHandSanitizersLabel();
-		}
-		if (gameState.day % GameState.DAYS_BETWEEN_FACE_MASK_REFILLS == 0) {
-			gameState.faceMasksRemaining += GameState.FACE_MASK_REFILL_SIZE;
-			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateFaceMasksLabel();
 		}
 
 		// Add more residents
@@ -299,14 +290,17 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 				case FluVilleCityHUD.HUD_MENU_SANITIZER:
 					sanitizeResident(resident);
 					break;
-				case FluVilleCityHUD.HUD_MENU_FACE_MASKS:
-					giveFacemaskToResident(resident);
-					break;
 				case FluVilleCityHUD.HUD_MENU_GRAB_RESIDENTS:
 					sendResidentHome(resident);
 					break;
 				}
 				return true;
+			}
+		}
+		
+		if (((FluVilleCityHUD)mBoundChaseCamera.getHUD()).currentMenuSelection == FluVilleCityHUD.HUD_MENU_SPONGE) {
+			if (pSceneTouchEvent.isActionMove()) {
+				// Iterate through the landmarks and clean if we're moving over them
 			}
 		}
 
@@ -325,18 +319,11 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	}
 	
 	public void sanitizeResident(final FluVilleResident resident) {
-		if (!resident.infected && gameState.handSanitizerDosesRemaining > 0) {
+		if (!resident.infected && resident.hoursOfSanitizerRemaining <= 0 && 
+				gameState.handSanitizerDosesRemaining > 0) {
 			resident.applyHandSanitizer();
 			gameState.handSanitizerDosesRemaining--;
 			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateHandSanitizersLabel();
-		}
-	}
-	
-	public void giveFacemaskToResident(final FluVilleResident resident) {
-		if (!resident.hasFaceMask && !resident.infected && gameState.faceMasksRemaining > 0) {
-			resident.giveFaceMask();
-			gameState.faceMasksRemaining--;
-			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateFaceMasksLabel();
 		}
 	}
 	

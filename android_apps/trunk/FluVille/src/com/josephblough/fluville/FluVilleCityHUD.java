@@ -20,7 +20,7 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 	public static final int HUD_MENU_IMMUNIZATION = 1;
 	public static final int HUD_MENU_GRAB_RESIDENTS = 2;
 	public static final int HUD_MENU_SANITIZER = 3;
-	public static final int HUD_MENU_FACE_MASKS = 4;
+	public static final int HUD_MENU_SPONGE = 4;
 	
 	private FluVilleCityActivity activity;
 	private boolean safeToReleaseMoreWalkers = true;
@@ -29,14 +29,9 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 	private Rectangle fluShotMenuItem;
 	private Rectangle sanitizerMenuItem;
 	private Rectangle dragResidentMenuItem;
-	private Rectangle faceMaskMenuItem;
-	/*private Sprite fluShotMenuImage;
-	private Sprite sanitizerMenuImage;
-	private Sprite dragResidentMenuImage;
-	private Sprite faceMaskMenuImage;*/
+	private Rectangle spongeMenuItem;
 	private ChangeableText fluShotsRemainingLabel;
 	private ChangeableText handSanitizerRemainingLabel;
-	private ChangeableText faceMasksRemainingLabel;
 	public int currentMenuSelection = HUD_MENU_NONE;
 	
 	public FluVilleCityHUD(final FluVilleCityActivity activity) {
@@ -95,25 +90,19 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 				sanitizerMenuImage.getY() + sanitizerMenuImage.getHeight() + 2);
 		sanitizerMenuItem.attachChild(handSanitizerRemainingLabel);
 		
-		// Face mask menu item
-		faceMaskMenuItem = new Rectangle(this.activity.getMapWidth(), y, 
+		// Sponge menu item
+		spongeMenuItem = new Rectangle(this.activity.getMapWidth(), y, 
 				(FluVilleCityActivity.CAMERA_WIDTH - this.activity.getMapWidth()), gap);
-		faceMaskMenuItem.setColor(0, 0, 0);
-		this.getLastChild().attachChild(faceMaskMenuItem);
-		this.registerTouchArea(faceMaskMenuItem);
+		spongeMenuItem.setColor(0, 0, 0);
+		this.getLastChild().attachChild(spongeMenuItem);
+		this.registerTouchArea(spongeMenuItem);
 		y += gap + 5;
 
-		final Sprite faceMaskMenuImage = new Sprite(0, 0, this.activity.mFaceMaskTextureRegion.clone());
-		faceMaskMenuImage.setPosition(faceMaskMenuItem.getWidth() / 2 - faceMaskMenuImage.getWidth() / 2, 
-				faceMaskMenuItem.getHeight() / 3 - faceMaskMenuImage.getHeight() / 2);
-		faceMaskMenuItem.attachChild(faceMaskMenuImage);
+		final Sprite spongeMenuItemMenuImage = new Sprite(0, 0, this.activity.mFaceMaskTextureRegion.clone());
+		spongeMenuItemMenuImage.setPosition(spongeMenuItem.getWidth() / 2 - spongeMenuItemMenuImage.getWidth() / 2, 
+				spongeMenuItem.getHeight() / 2 - spongeMenuItemMenuImage.getHeight() / 2);
+		spongeMenuItem.attachChild(spongeMenuItemMenuImage);
 		
-		faceMasksRemainingLabel = new ChangeableText(0, 0, activity.mMenuFont, "99 remaining");
-		faceMasksRemainingLabel.setText("" + activity.gameState.faceMasksRemaining + " remaining");
-		faceMasksRemainingLabel.setPosition(faceMaskMenuItem.getWidth() / 2 - faceMasksRemainingLabel.getWidth() / 2, 
-				sanitizerMenuImage.getY() + sanitizerMenuImage.getHeight() + 2);
-		faceMaskMenuItem.attachChild(faceMasksRemainingLabel);
-
 		// Drag residents menu item
 		dragResidentMenuItem = new Rectangle(this.activity.getMapWidth(), y, 
 				(FluVilleCityActivity.CAMERA_WIDTH - this.activity.getMapWidth()), gap);
@@ -149,11 +138,11 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 				currentMenuSelection = HUD_MENU_SANITIZER;
 			}
 		}
-		else if (pTouchArea.equals(faceMaskMenuItem)) {
+		else if (pTouchArea.equals(spongeMenuItem)) {
 			Log.d(TAG, "face masks");
-			if (currentMenuSelection != HUD_MENU_FACE_MASKS) {
+			if (currentMenuSelection != HUD_MENU_SPONGE) {
 				// Display a popup explaining the benefits of face masks to prevent infection
-				currentMenuSelection = HUD_MENU_FACE_MASKS;
+				currentMenuSelection = HUD_MENU_SPONGE;
 			}
 		}
 		else if (pTouchArea.equals(dragResidentMenuItem)) {
@@ -202,32 +191,32 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 			this.fluShotMenuItem.setColor(0.3f, 0.3f, 0.3f);
 			this.sanitizerMenuItem.setColor(0, 0, 0);
 			this.dragResidentMenuItem.setColor(0, 0, 0);
-			this.faceMaskMenuItem.setColor(0, 0, 0);
+			this.spongeMenuItem.setColor(0, 0, 0);
 			break;
 		case HUD_MENU_GRAB_RESIDENTS:
 			this.fluShotMenuItem.setColor(0, 0, 0);
 			this.sanitizerMenuItem.setColor(0, 0, 0);
 			this.dragResidentMenuItem.setColor(0.3f, 0.3f, 0.3f);
-			this.faceMaskMenuItem.setColor(0, 0, 0);
+			this.spongeMenuItem.setColor(0, 0, 0);
 			break;
 		case HUD_MENU_SANITIZER:
 			this.fluShotMenuItem.setColor(0, 0, 0);
 			this.sanitizerMenuItem.setColor(0.3f, 0.3f, 0.3f);
 			this.dragResidentMenuItem.setColor(0, 0, 0);
-			this.faceMaskMenuItem.setColor(0, 0, 0);
+			this.spongeMenuItem.setColor(0, 0, 0);
 			break;
-		case HUD_MENU_FACE_MASKS:
+		case HUD_MENU_SPONGE:
 			this.fluShotMenuItem.setColor(0, 0, 0);
 			this.sanitizerMenuItem.setColor(0, 0, 0);
 			this.dragResidentMenuItem.setColor(0, 0, 0);
-			this.faceMaskMenuItem.setColor(0.3f, 0.3f, 0.3f);
+			this.spongeMenuItem.setColor(0.3f, 0.3f, 0.3f);
 			break;
 		case HUD_MENU_NONE:
 			// Unhilight all of the menu items
 			this.fluShotMenuItem.setColor(0, 0, 0);
 			this.sanitizerMenuItem.setColor(0, 0, 0);
 			this.dragResidentMenuItem.setColor(0, 0, 0);
-			this.faceMaskMenuItem.setColor(0, 0, 0);
+			this.spongeMenuItem.setColor(0, 0, 0);
 			break;
 		}
 	}
@@ -243,9 +232,5 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 	
 	public void updateHandSanitizersLabel() {
 		this.handSanitizerRemainingLabel.setText("" + activity.gameState.handSanitizerDosesRemaining + " remaining");
-	}
-	
-	public void updateFaceMasksLabel() {
-		this.faceMasksRemainingLabel.setText("" + activity.gameState.faceMasksRemaining + " remaining");
 	}
 }

@@ -10,6 +10,7 @@ import org.anddev.andengine.entity.modifier.PathModifier.Path;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
+import org.anddev.andengine.entity.text.ChangeableText;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.util.MathUtils;
 
@@ -30,11 +31,11 @@ public class FluVilleResident extends AnimatedSprite {
 	// state variables
 	public boolean infected;
 	public boolean immunized;
-	public boolean hasFaceMask;
 	public int hoursOfSanitizerRemaining;
 	public int daysOfInfectionRemaining;
 	public PathModifier pathOfTravel;
 	public boolean isWalking;
+	public ChangeableText protectionLabel;
 	
 	public FluVilleResident(final FluVilleCityActivity activity, final Scene scene, final TMXObject origin, final TiledTextureRegion texture) {
 		super(origin.getX() + origin.getWidth() / 2 - texture.getTileWidth() / 2,
@@ -47,10 +48,11 @@ public class FluVilleResident extends AnimatedSprite {
 		this.home = origin;
 		this.infected = false;
 		this.immunized = false;
-		this.hasFaceMask = false;
 		this.hoursOfSanitizerRemaining = 0;
 		this.daysOfInfectionRemaining = 0;
 		this.isWalking = false;
+		
+		this.protectionLabel = new ChangeableText(0, 0, this.activity.mMenuFont, "10");
 	}
 
 	public void walk() {
@@ -316,14 +318,23 @@ public class FluVilleResident extends AnimatedSprite {
 	
 	public void immunize() {
 		immunized = true;
+		setTextureRegion(activity.mImmunizedPlayerTextureRegion);
 	}
 	
 	public void applyHandSanitizer() {
 		hoursOfSanitizerRemaining += HOURS_OF_PROTECTION_FROM_HAND_SANITIZER;
+		protectionLabel.setText("" + hoursOfSanitizerRemaining);
+		attachChild(protectionLabel);
 	}
 	
-	public void giveFaceMask() {
-		hasFaceMask = true;
+	public void reduceSanitizerProtect() {
+		hoursOfSanitizerRemaining--;
+		if (hoursOfSanitizerRemaining > 0) {
+			protectionLabel.setText("" + hoursOfSanitizerRemaining);
+		}
+		else {
+			detachChild(protectionLabel);
+		}
 	}
 	
 	public void recover() {
