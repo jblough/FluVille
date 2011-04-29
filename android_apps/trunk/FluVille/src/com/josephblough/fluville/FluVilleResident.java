@@ -4,6 +4,7 @@ import org.anddev.andengine.engine.handler.timer.ITimerCallback;
 import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXObject;
+import org.anddev.andengine.entity.modifier.IEntityModifier.IEntityModifierMatcher;
 import org.anddev.andengine.entity.modifier.PathModifier;
 import org.anddev.andengine.entity.modifier.PathModifier.IPathModifierListener;
 import org.anddev.andengine.entity.modifier.PathModifier.Path;
@@ -13,6 +14,7 @@ import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.entity.text.ChangeableText;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.util.MathUtils;
+import org.anddev.andengine.util.modifier.IModifier;
 
 import android.util.Log;
 
@@ -33,13 +35,19 @@ public class FluVilleResident extends AnimatedSprite {
 	public boolean immunized;
 	public int hoursOfSanitizerRemaining;
 	public int daysOfInfectionRemaining;
-	public PathModifier pathOfTravel;
+	//public PathModifier pathOfTravel;
 	public boolean isWalking;
 	public ChangeableText protectionLabel;
 	
+	private MainPathListener mainPathListener = new MainPathListener();
+	private HomePathListener homePathListener = new HomePathListener();
+	
+	private static RectanglePool rectanglePool = new RectanglePool();
+	private static final long[] animationDurations = new long[]{200, 200, 200, 200, 200, 200, 200, 200};
+	
 	public FluVilleResident(final FluVilleCityActivity activity, final Scene scene, final TMXObject origin, final TiledTextureRegion texture) {
 		super(origin.getX() + origin.getWidth() / 2 - texture.getTileWidth() / 2,
-				origin.getY() + origin.getHeight() / 2 - texture.getTileHeight() / 2, texture.clone());
+				origin.getY() + origin.getHeight() / 2 - texture.getTileHeight() / 2, texture);
 		
 		Log.d(TAG, "Creating FluVilleResident");
 		this.activity = activity;
@@ -67,7 +75,7 @@ public class FluVilleResident extends AnimatedSprite {
 		final Path path = calculatePath(getX(), getY(), 
 				destination.getX() + MathUtils.random(0, destination.getWidth()), destination.getY());
 
-		this.pathOfTravel = new PathModifier(getRandomSpeed(), path, null, new IPathModifierListener() {
+		PathModifier pathOfTravel = new PathModifier(getRandomSpeed(), path, null, mainPathListener);/*new IPathModifierListener() {
 			@Override
 			public void onWaypointPassed(final PathModifier pPathModifier, final IEntity pEntity, final int pWaypointIndex) {
 				float xPoints[] = pPathModifier.getPath().getCoordinatesX();
@@ -96,9 +104,9 @@ public class FluVilleResident extends AnimatedSprite {
 					}
 				}
 			}
-		});
+		});*/
 		
-		this.registerEntityModifier(this.pathOfTravel);
+		this.registerEntityModifier(pathOfTravel);
 	}
 
 	private Path calculatePath(final float fromX, final float fromY, final float toX, final float toY) {
@@ -235,23 +243,19 @@ public class FluVilleResident extends AnimatedSprite {
 	}
 	
 	private void faceDownward() {
-		//this.animate(new long[]{200, 200, 200}, 6, 8, true);
-		this.animate(new long[]{200, 200, 200, 200, 200, 200, 200, 200}, 0, 7, true);
+		this.animate(animationDurations, 0, 7, true);
 	}
 	
 	private void faceRight() {
-		//this.animate(new long[]{200, 200, 200}, 3, 5, true);
-		this.animate(new long[]{200, 200, 200, 200, 200, 200, 200, 200}, 24, 31, true);
+		this.animate(animationDurations, 24, 31, true);
 	}
 	
 	private void faceUpward() {
-		//this.animate(new long[]{200, 200, 200}, 0, 2, true);
-		this.animate(new long[]{200, 200, 200, 200, 200, 200, 200, 200}, 8, 15, true);
+		this.animate(animationDurations, 8, 15, true);
 	}
 	
 	private void faceLeft() {
-		//this.animate(new long[]{200, 200, 200}, 9, 11, true);
-		this.animate(new long[]{200, 200, 200, 200, 200, 200, 200, 200}, 16, 23, true);
+		this.animate(animationDurations, 16, 23, true);
 	}
 
 	private void reachedDestination() {
@@ -286,24 +290,45 @@ public class FluVilleResident extends AnimatedSprite {
 	}
 	
 	public boolean isAtHome() {
-		Rectangle homeRectangle = new Rectangle(home.getX(), home.getY(), 
+		/*Rectangle homeRectangle = new Rectangle(home.getX(), home.getY(), 
 				home.getWidth(), home.getHeight());
-		return homeRectangle.collidesWith(this);
+		return homeRectangle.collidesWith(this);*/
+		Rectangle homeRectangle = rectanglePool.obtain(home.getX(), home.getY(), 
+				home.getWidth(), home.getHeight());
+		boolean collides = homeRectangle.collidesWith(this);
+		rectanglePool.recyclePoolItem(homeRectangle);
+		return collides;
 	}
 	
 	public boolean isAtWork() {
-		Rectangle workRectangle = new Rectangle(placeOfWork.getX(), placeOfWork.getY(), 
+		/*Rectangle workRectangle = new Rectangle(placeOfWork.getX(), placeOfWork.getY(), 
 				placeOfWork.getWidth(), placeOfWork.getHeight());
-		return workRectangle.collidesWith(this);
+		return workRectangle.collidesWith(this);*/
+		Rectangle workRectangle = rectanglePool.obtain(placeOfWork.getX(), placeOfWork.getY(), 
+				placeOfWork.getWidth(), placeOfWork.getHeight());
+		boolean collides = workRectangle.collidesWith(this);
+		rectanglePool.recyclePoolItem(workRectangle);
+		return collides;
 	}
 	
 	public void sendHome() {
-		this.unregisterEntityModifier(this.pathOfTravel);
+		//this.unregisterEntityModifier(this.pathOfTravel);
+		
+		// Remove all entity modifiers
+		this.unregisterEntityModifiers(new IEntityModifierMatcher() {
+			
+			@Override
+			public boolean matches(IModifier<IEntity> pObject) {
+				// Unregister ALL modifiers
+				return true;
+			}
+		});
+		
 		Path path = new Path(2);
 		path.to(getX() - getWidth() / 2, getY() - getHeight() / 2).
 			to(home.getX() + MathUtils.random(0, home.getWidth()) - getWidth() / 2, 
 				home.getY() + MathUtils.random(0, home.getHeight()) - getHeight() / 2);
-		registerEntityModifier(new PathModifier(0.5f, path, null, new IPathModifierListener() {
+		registerEntityModifier(new PathModifier(0.5f, path, null, homePathListener));/*new IPathModifierListener() {
 			
 			@Override
 			public void onWaypointPassed(PathModifier pPathModifier, IEntity pEntity,
@@ -313,7 +338,7 @@ public class FluVilleResident extends AnimatedSprite {
 					reachedDestination();
 				}
 			}
-		}));
+		}));*/
 	}
 	
 	public void immunize() {
@@ -339,5 +364,47 @@ public class FluVilleResident extends AnimatedSprite {
 	
 	public void recover() {
 		this.infected = false;
+	}
+	
+	private class MainPathListener implements IPathModifierListener {
+		@Override
+		public void onWaypointPassed(final PathModifier pPathModifier, final IEntity pEntity, final int pWaypointIndex) {
+			float xPoints[] = pPathModifier.getPath().getCoordinatesX();
+			float yPoints[] = pPathModifier.getPath().getCoordinatesY();
+			if (pWaypointIndex >= (xPoints.length-1)) {
+				reachedDestination();
+			}
+			else {
+				float xDifference = xPoints[pWaypointIndex + 1] - xPoints[pWaypointIndex];
+				float yDifference = yPoints[pWaypointIndex + 1] - yPoints[pWaypointIndex];
+				if (Math.abs(xDifference) > Math.abs(yDifference) &&
+						(xDifference > 0)) {
+					faceRight();
+				}
+				else if (Math.abs(xDifference) > Math.abs(yDifference) &&
+						(xDifference < 0)) {
+					faceLeft();
+				}
+				else if (Math.abs(yDifference) > Math.abs(xDifference) &&
+						(yDifference < 0)) {
+					faceUpward();
+				}
+				else if (Math.abs(yDifference) > Math.abs(xDifference) &&
+						(yDifference > 0)) {
+					faceDownward();
+				}
+			}
+		}
+	}
+	
+	private class HomePathListener implements IPathModifierListener {
+		@Override
+		public void onWaypointPassed(PathModifier pPathModifier, IEntity pEntity,
+				int pWaypointIndex) {
+			float xPoints[] = pPathModifier.getPath().getCoordinatesX();
+			if (pWaypointIndex >= (xPoints.length-1)) {
+				reachedDestination();
+			}
+		}
 	}
 }

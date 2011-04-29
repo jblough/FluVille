@@ -60,7 +60,7 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 		this.registerTouchArea(fluShotMenuItem);
 		y += gap;
 
-		final Sprite fluShotMenuImage = new Sprite(0, 0, this.activity.mImmunizationTextureRegion.clone());
+		final Sprite fluShotMenuImage = new Sprite(0, 0, this.activity.mImmunizationTextureRegion);
 		fluShotMenuImage.setPosition(fluShotMenuItem.getWidth() / 2 - fluShotMenuImage.getWidth() / 2, 
 				fluShotMenuItem.getHeight() / 3 - fluShotMenuImage.getHeight() / 2);
 		fluShotMenuItem.attachChild(fluShotMenuImage);
@@ -79,7 +79,7 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 		this.registerTouchArea(sanitizerMenuItem);
 		y += gap + 5;
 		
-		final Sprite sanitizerMenuImage = new Sprite(0, 0, this.activity.mSanitizerTextureRegion.clone());
+		final Sprite sanitizerMenuImage = new Sprite(0, 0, this.activity.mSanitizerTextureRegion);
 		sanitizerMenuImage.setPosition(sanitizerMenuItem.getWidth() / 2 - sanitizerMenuImage.getWidth() / 2, 
 				sanitizerMenuItem.getHeight() / 3 - sanitizerMenuImage.getHeight() / 2);
 		sanitizerMenuItem.attachChild(sanitizerMenuImage);
@@ -98,7 +98,7 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 		this.registerTouchArea(spongeMenuItem);
 		y += gap + 5;
 
-		final Sprite spongeMenuItemMenuImage = new Sprite(0, 0, this.activity.mFaceMaskTextureRegion.clone());
+		final Sprite spongeMenuItemMenuImage = new Sprite(0, 0, this.activity.mSpongeTextureRegion);
 		spongeMenuItemMenuImage.setPosition(spongeMenuItem.getWidth() / 2 - spongeMenuItemMenuImage.getWidth() / 2, 
 				spongeMenuItem.getHeight() / 2 - spongeMenuItemMenuImage.getHeight() / 2);
 		spongeMenuItem.attachChild(spongeMenuItemMenuImage);
@@ -111,7 +111,7 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 		this.registerTouchArea(dragResidentMenuItem);
 		y += gap + 5;
 
-		final Sprite dragResidentMenuImage = new Sprite(0, 0, this.activity.mSendHomeTextureRegion.clone());
+		final Sprite dragResidentMenuImage = new Sprite(0, 0, this.activity.mSendHomeTextureRegion);
 		dragResidentMenuImage.setPosition(dragResidentMenuItem.getWidth() / 2 - dragResidentMenuImage.getWidth() / 2, 
 				dragResidentMenuItem.getHeight() / 2 - dragResidentMenuImage.getHeight() / 2);
 		dragResidentMenuItem.attachChild(dragResidentMenuImage);
@@ -170,7 +170,7 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 
 					@Override
 					public void onTimePassed(TimerHandler pTimerHandler) {
-						activity.addWalker();
+						activity.addResident();
 					}
 				}));
 			}

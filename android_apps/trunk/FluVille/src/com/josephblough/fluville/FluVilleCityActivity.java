@@ -42,10 +42,15 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	// ===========================================================
 	private static final String TAG = "FluVilleCityActivity";
 	
-	//public static final int CAMERA_WIDTH = 1000;
-	//public static final int CAMERA_HEIGHT = 700;
 	public static final int CAMERA_WIDTH = 760;
 	public static final int CAMERA_HEIGHT = 480;
+	
+	//public static final int CAMERA_WIDTH = 720;
+	//public static final int CAMERA_HEIGHT = 480;
+	
+	//public static final int CAMERA_WIDTH = 380;
+	//public static final int CAMERA_HEIGHT = 240;
+	
 	//public static final int CAMERA_WIDTH = 480;
 	//public static final int CAMERA_HEIGHT = 320;
 	
@@ -72,7 +77,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	public static final String MAP_LANDMARK_OFFICE_1 = "Office1";
 	public static final String MAP_LANDMARK_OFFICE_2 = "Office2";
 	public static final String MAP_LANDMARK_OFFICE_3 = "Office3";
-	public static final String MAP_LANDMARK_OFFICE_4 = "Office4";
+	//public static final String MAP_LANDMARK_OFFICE_4 = "Office4";
 	
 	
 	// ===========================================================
@@ -99,7 +104,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	public TextureRegion mImmunizationTextureRegion;
 	public TextureRegion mSanitizerTextureRegion;
 	//public TextureRegion mTissueTextureRegion;
-	public TextureRegion mFaceMaskTextureRegion;
+	public TextureRegion mSpongeTextureRegion;
 	public TextureRegion mSendHomeTextureRegion;
 
 	public GameState gameState;
@@ -140,11 +145,11 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		this.mMenuItemsTexture = new Texture(128, 128,
 				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		this.mImmunizationTextureRegion = TextureRegionFactory.createFromAsset(this.mMenuItemsTexture, this, 
-				"gfx/syringe.png", 0, 0);
+				"gfx/syringe2.png", 0, 0);
 		this.mSanitizerTextureRegion = TextureRegionFactory.createFromAsset(this.mMenuItemsTexture, this, 
-				"gfx/sanitizer.jpg", 0, 32);
-		this.mFaceMaskTextureRegion = TextureRegionFactory.createFromAsset(this.mMenuItemsTexture, this, 
-				"gfx/mask.png", 0, 64);
+				"gfx/sanitizer.png", 0, 32);
+		this.mSpongeTextureRegion = TextureRegionFactory.createFromAsset(this.mMenuItemsTexture, this, 
+				"gfx/sponge.png", 0, 64);
 		this.mSendHomeTextureRegion = TextureRegionFactory.createFromAsset(this.mMenuItemsTexture, this, 
 				"gfx/ic_launcher_home.png", 0, 96);
 		this.mEngine.getTextureManager().loadTexture(this.mMenuItemsTexture);
@@ -170,6 +175,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 				}
 			});
 			this.mTMXTiledMap = tmxLoader.loadFromAsset(this, "tmx/smaller_tiled.tmx");
+			//this.mTMXTiledMap = tmxLoader.loadFromAsset(this, "tmx/even_smaller_tiled.tmx");
 		} catch (final TMXLoadException tmxle) {
 			Log.e(TAG, tmxle.getMessage(), tmxle);
 		}
@@ -199,7 +205,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	@Override
 	public void onLoadComplete() {
 		for (int i=0; i<5; i++) {
-			addWalker();
+			addResident();
 		}
 
 		this.mEngine.registerUpdateHandler(new TimerHandler(SECONDS_PER_FLUVILLE_HOUR, true, new ITimerCallback() {
@@ -273,7 +279,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 
 		// Add more residents
 		for (int i=0; i<5; i++) {
-			addWalker();
+			addResident();
 		}
 		
 	}
@@ -332,11 +338,11 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		resident.sendHome();
 	}
 	
-	public void addWalker() {
-		addWalker(this.mEngine.getScene());
+	public void addResident() {
+		addResident(this.mEngine.getScene());
 	}
 	
-	private void addWalker(final Scene scene) {
+	private void addResident(final Scene scene) {
 		final TMXObject spawnPoint = getRandomOrigin();
 		final FluVilleResident player = new FluVilleResident(this, scene, spawnPoint, this.mPlayerTextureRegion);
 
@@ -358,7 +364,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	}
 	
 	private TMXObject getRandomDestination() {
-		switch (MathUtils.random(0, 4)) {
+		switch (MathUtils.random(0, 5)) {
 		case 0:
 			return mapObjects.get(MAP_LANDMARK_PIZZA);
 		case 1:
@@ -367,11 +373,11 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			return mapObjects.get(MAP_LANDMARK_OFFICE_2);
 		case 3:
 			return mapObjects.get(MAP_LANDMARK_OFFICE_3);
+		//case 4:
+			//return mapObjects.get(MAP_LANDMARK_OFFICE_4);
 		case 4:
-			return mapObjects.get(MAP_LANDMARK_OFFICE_4);
-		case 5:
 			return mapObjects.get(MAP_LANDMARK_STORE_1);
-		case 6:
+		case 5:
 			return mapObjects.get(MAP_LANDMARK_STORE_2);
 		}
 		return null;
