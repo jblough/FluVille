@@ -6,7 +6,7 @@
     <string name="immunization_benefits">CDC recommends a yearly flu vaccine as the first\nand most important step in protecting\nagainst flu viruses.</string>
     <string name="immunization_instructions">Tap on a resident to immunize them.\nThey will be enclosed in a green bubble to\nidentify that they are safe from infection.</string>
     <string name="sanitizer_benefits">Washing your hands often will help\nprotect you from germs.  If soap and water are not\navailable, use an alcohol-based hand rub.</string>
-    <string name="sanitizer_instructions">Tap on a resident to immunize them.\nHand sanitizer protects them for 5 hours\nrepresented by a number to the left of the resident.</string>
+    <string name="sanitizer_instructions">Tap on a resident to provide them with hand sanitizer.\nHand sanitizer protects them for 5 hours\nrepresented by a number to the left of the resident.</string>
     <string name="sponge_usage">Germs are often spread when a person\ntouches something that is contaminated with germs and\nthen touches his or her eyes, nose, or mouth.</string>
     <string name="sponge_instructions">Move your finger over a contaminated building\nto clean the building and reduce the chance of\ninfections within that building.</string>
     <string name="send_residents_home_reason">If possible, stay home from work, school, and\nerrands when you are sick.\nYou will help prevent those around you\nfrom getting sick.</string>
