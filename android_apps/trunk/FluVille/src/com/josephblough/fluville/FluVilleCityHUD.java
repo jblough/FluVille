@@ -127,29 +127,41 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 			Log.d(TAG, "immunization");
 			//releaseWalkers();
 			if (currentMenuSelection != HUD_MENU_IMMUNIZATION) {
-				// Display a popup explaining the benefits of immunization
 				currentMenuSelection = HUD_MENU_IMMUNIZATION;
+				// Display a popup explaining the benefits of immunization
+				if (!activity.gameState.shownImmunizationMessage) {
+					activity.displayImmunizationBenefits();
+				}
 			}
 		}
 		else if (pTouchArea.equals(sanitizerMenuItem)) {
 			Log.d(TAG, "sanitizer");
 			if (currentMenuSelection != HUD_MENU_SANITIZER) {
-				// Display a popup explaining the benefits of hand sanitizer when soap and water is not available
 				currentMenuSelection = HUD_MENU_SANITIZER;
+				// Display a popup explaining the benefits of hand sanitizer when soap and water is not available
+				if (!activity.gameState.shownSanitizerMessage) {
+					activity.displayHandSanitizerBenefits();
+				}
 			}
 		}
 		else if (pTouchArea.equals(spongeMenuItem)) {
 			Log.d(TAG, "face masks");
 			if (currentMenuSelection != HUD_MENU_SPONGE) {
-				// Display a popup explaining the benefits of face masks to prevent infection
 				currentMenuSelection = HUD_MENU_SPONGE;
+				// Display a popup explaining the benefits of face masks to prevent infection
+				if (!activity.gameState.shownSpongeMessage) {
+					activity.displaySpongeUsage();
+				}
 			}
 		}
 		else if (pTouchArea.equals(dragResidentMenuItem)) {
 			Log.d(TAG, "drag residents");
 			if (currentMenuSelection != HUD_MENU_GRAB_RESIDENTS) {
-				// Display a popup explaining the need to stay inside when sick
 				currentMenuSelection = HUD_MENU_GRAB_RESIDENTS;
+				// Display a popup explaining the need to stay inside when sick
+				if (!activity.gameState.shownSendHomeMessage) {
+					activity.displaySendResidentHomeUsage();
+				}
 			}
 		}
 		else {

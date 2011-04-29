@@ -19,6 +19,13 @@ public class GameState {
 	public int handSanitizerDosesRemaining;
 	public List<FluVilleResident> residents;
 	
+	public boolean shownWelcomeMessage = false;
+	public boolean shownImmunizationMessage = false;
+	public boolean shownSanitizerMessage = false;
+	public boolean shownSpongeMessage = false;
+	public boolean shownSendHomeMessage = false;
+	public boolean shownInfectedPersonMessage = false;
+	
 	public GameState() {
 		day = 1;
 		hourOfDay = 0;

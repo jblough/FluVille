@@ -2,4 +2,10 @@
 <resources>
     <string name="hello">Hello World, FluVilleCityActivity!</string>
     <string name="app_name">FluVille</string>
+    <string name="welcome">Welcome to FluVille!\nAs the mayor of FluVille, your job\nis to keep your residents healthly\nand reduce the spread of the flu\nthroughout the population.</string>
+    <string name="immunization_benefits">CDC recommends a yearly flu vaccine as the first\nand most important step in protecting\nagainst flu viruses.</string>
+    <string name="sanitizer_benefits">Washing your hands often will help\nprotect you from germs.  If soap and water are not\navailable, use an alcohol-based hand rub.</string>
+    <string name="sponge_usage">Germs are often spread when a person\ntouches something that is contaminated with germs and\nthen touches his or her eyes, nose, or mouth.</string>
+    <string name="send_residents_home_reason">If possible, stay home from work, school, and\nerrands when you are sick.\nYou will help prevent those around you\nfrom getting sick.</string>
+    <string name="infected_person_warning">People with flu can spread it to\nothers up to about 6 feet away.</string>
 </resources>
