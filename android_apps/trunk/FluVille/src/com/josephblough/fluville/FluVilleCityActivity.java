@@ -20,6 +20,7 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXTileProperty;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader.ITMXTilePropertiesListener;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
+import org.anddev.andengine.entity.modifier.IEntityModifier;
 import org.anddev.andengine.entity.modifier.MoveYModifier;
 import org.anddev.andengine.entity.modifier.SequenceEntityModifier;
 import org.anddev.andengine.entity.scene.Scene;
@@ -425,7 +426,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		return this.mTMXTiledMap.getTileColumns() * this.mTMXTiledMap.getTileWidth();
 	}
 	
-	private void displayMessage(final String message) {
+	private void displayMessage(final String... messages) {
 		/*
 		runOnUiThread(new Runnable() {
 			
@@ -445,7 +446,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		//messageScene.setBackground(new ColorBackground(1.0f, 1.0f, 1.0f, 1.0f));
 		messageScene.setBackgroundEnabled(false);
 		final Sprite bubble = new Sprite(0, 0, mSpeechBubble);
-		final Text text = new Text(0.0f, 0.0f, FluVilleCityActivity.this.mDialogFont, message);
+		final Text text = new Text(0.0f, 0.0f, FluVilleCityActivity.this.mDialogFont, messages[0]);
 		//bubble.setHeight(CAMERA_HEIGHT * 2.0f / 3.0f/* 400.0f*/);
 		//bubble.setWidth(CAMERA_WIDTH * 2.0f / 3.0f/* 100.0f*/);
 		bubble.setWidth(text.getWidth() + 25.0f);
@@ -470,6 +471,13 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 					public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
 						Log.d(TAG, "messageScene onSceneTouchEvent");
 						mEngine.getScene().clearChildScene();
+						if (messages.length > 1) {
+							String[] nextMessages = new String[messages.length-1];
+							for (int i=1; i<messages.length; i++) {
+								nextMessages[i-1] = messages[i];
+							}
+							displayMessage(nextMessages);
+						}
 						return true;
 					}
 				});
@@ -538,35 +546,35 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	
 	public void displayImmunizationBenefits() {
 		Log.d(TAG, "displayImmunizationBenefits");
-		displayMessage(getString(R.string.immunization_benefits));
+		displayMessage(getString(R.string.immunization_benefits), getString(R.string.immunization_instructions));
 		gameState.shownImmunizationMessage = true;
 		updatePreviouslyShownMessages("shownImmunizationMessage");
 	}
 
 	public void displayHandSanitizerBenefits() {
 		Log.d(TAG, "displayHandSanitizerBenefits");
-		displayMessage(getString(R.string.sanitizer_benefits));
+		displayMessage(getString(R.string.sanitizer_benefits), getString(R.string.sanitizer_instructions));
 		gameState.shownSanitizerMessage = true;
 		updatePreviouslyShownMessages("shownSanitizerMessage");
 	}
 
 	public void displaySpongeUsage() {
 		Log.d(TAG, "displaySpongeUsage");
-		displayMessage(getString(R.string.sponge_usage));
+		displayMessage(getString(R.string.sponge_usage), getString(R.string.sponge_instructions));
 		gameState.shownSpongeMessage = true;
 		updatePreviouslyShownMessages("shownSpongeMessage");
 	}
 	
 	public void displaySendResidentHomeUsage() {
 		Log.d(TAG, "displaySendResidentHomeUsage");
-		displayMessage(getString(R.string.send_residents_home_reason));
+		displayMessage(getString(R.string.send_residents_home_reason), getString(R.string.send_residents_home_instructions));
 		gameState.shownSendHomeMessage = true;
 		updatePreviouslyShownMessages("shownSendHomeMessage");
 	}
 	
 	public void displayInfectedPersonWarning() {
 		Log.d(TAG, "displayInfectedPersonWarning");
-		displayMessage(getString(R.string.infected_person_warning));
+		displayMessage(getString(R.string.infected_person_warning), getString(R.string.infected_person_instructions));
 		gameState.shownInfectedPersonMessage = true;
 		updatePreviouslyShownMessages("shownInfectedPersonMessage");
 	}
