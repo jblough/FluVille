@@ -122,7 +122,6 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 
 	@Override
 	public boolean onAreaTouched(TouchEvent pSceneTouchEvent, ITouchArea pTouchArea, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-		Log.d(TAG, "onAreaTouched");
 		if (pTouchArea.equals(fluShotMenuItem)) {
 			Log.d(TAG, "immunization");
 			//releaseWalkers();
@@ -145,7 +144,7 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 			}
 		}
 		else if (pTouchArea.equals(spongeMenuItem)) {
-			Log.d(TAG, "face masks");
+			Log.d(TAG, "sponge");
 			if (currentMenuSelection != HUD_MENU_SPONGE) {
 				currentMenuSelection = HUD_MENU_SPONGE;
 				// Display a popup explaining the benefits of face masks to prevent infection

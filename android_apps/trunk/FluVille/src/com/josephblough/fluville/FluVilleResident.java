@@ -42,7 +42,6 @@ public class FluVilleResident extends AnimatedSprite {
 	private MainPathListener mainPathListener = new MainPathListener();
 	private HomePathListener homePathListener = new HomePathListener();
 	
-	private static RectanglePool rectanglePool = new RectanglePool();
 	private static final long[] animationDurations = new long[]{200, 200, 200, 200, 200, 200, 200, 200};
 	
 	public FluVilleResident(final FluVilleCityActivity activity, final Scene scene, final TMXObject origin, final TiledTextureRegion texture) {
@@ -290,24 +289,18 @@ public class FluVilleResident extends AnimatedSprite {
 	}
 	
 	public boolean isAtHome() {
-		/*Rectangle homeRectangle = new Rectangle(home.getX(), home.getY(), 
-				home.getWidth(), home.getHeight());
-		return homeRectangle.collidesWith(this);*/
-		Rectangle homeRectangle = rectanglePool.obtain(home.getX(), home.getY(), 
+		Rectangle homeRectangle = FluVilleCityActivity.RECTANGLE_POOL.obtain(home.getX(), home.getY(), 
 				home.getWidth(), home.getHeight());
 		boolean collides = homeRectangle.collidesWith(this);
-		rectanglePool.recyclePoolItem(homeRectangle);
+		FluVilleCityActivity.RECTANGLE_POOL.recyclePoolItem(homeRectangle);
 		return collides;
 	}
 	
 	public boolean isAtWork() {
-		/*Rectangle workRectangle = new Rectangle(placeOfWork.getX(), placeOfWork.getY(), 
-				placeOfWork.getWidth(), placeOfWork.getHeight());
-		return workRectangle.collidesWith(this);*/
-		Rectangle workRectangle = rectanglePool.obtain(placeOfWork.getX(), placeOfWork.getY(), 
+		Rectangle workRectangle = FluVilleCityActivity.RECTANGLE_POOL.obtain(placeOfWork.getX(), placeOfWork.getY(), 
 				placeOfWork.getWidth(), placeOfWork.getHeight());
 		boolean collides = workRectangle.collidesWith(this);
-		rectanglePool.recyclePoolItem(workRectangle);
+		FluVilleCityActivity.RECTANGLE_POOL.recyclePoolItem(workRectangle);
 		return collides;
 	}
 	

@@ -20,9 +20,9 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXTileProperty;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader.ITMXTilePropertiesListener;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
-import org.anddev.andengine.entity.modifier.IEntityModifier;
 import org.anddev.andengine.entity.modifier.MoveYModifier;
 import org.anddev.andengine.entity.modifier.SequenceEntityModifier;
+import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
 import org.anddev.andengine.entity.sprite.Sprite;
@@ -68,8 +68,8 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	public static final String MAP_LANDMARK_RIGHT_RESIDENTIAL_INTERSECTION = "TopRightResidentialCorner";
 	public static final String MAP_LANDMARK_RESIDENTIAL_SPAWN_POINT_1 = "SpawnPoint1";
 	public static final String MAP_LANDMARK_RESIDENTIAL_SPAWN_POINT_2 = "SpawnPoint2";
-	public static final String MAP_LANDMARK_FLYER_1 = "Flyer1";
-	public static final String MAP_LANDMARK_FLYER_2 = "Flyer2";
+	public static final String MAP_LANDMARK_FLYER_1 = "Flyers1";
+	public static final String MAP_LANDMARK_FLYER_2 = "Flyers2";
 	public static final String MAP_LANDMARK_TOP_LEFT_INTERSECTION = "TopLeftIntersection";
 	public static final String MAP_LANDMARK_TOP_RIGHT_INTERSECTION = "TopRightIntersection";
 	public static final String MAP_LANDMARK_MIDDLE_LEFT_INTERSECTION = "MiddleLeftIntersection";
@@ -85,8 +85,17 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	public static final String MAP_LANDMARK_OFFICE_1 = "Office1";
 	public static final String MAP_LANDMARK_OFFICE_2 = "Office2";
 	public static final String MAP_LANDMARK_OFFICE_3 = "Office3";
-	//public static final String MAP_LANDMARK_OFFICE_4 = "Office4";
+	public static final String MAP_LANDMARK_OFFICE_4 = "Office4";
 	
+	public static final String MAP_LANDMARK_HOSPITAL_BLDG = "HospitalBuilding";
+	public static final String MAP_LANDMARK_SCHOOL_BLDG = "SchoolBuilding";
+	public static final String MAP_LANDMARK_PIZZA_BLDG = "PizzaBuilding";
+	public static final String MAP_LANDMARK_STORE_1_BLDG = "StoreBuilding1";
+	public static final String MAP_LANDMARK_STORE_2_BLDG = "StoreBuilding2";
+	public static final String MAP_LANDMARK_OFFICE_1_BLDG = "OfficeBuilding1";
+	public static final String MAP_LANDMARK_OFFICE_2_BLDG = "OfficeBuilding2";
+	public static final String MAP_LANDMARK_OFFICE_3_BLDG = "OfficeBuilding3";
+	public static final String MAP_LANDMARK_OFFICE_4_BLDG = "OfficeBuilding4";
 	
 	// ===========================================================
 	// Fields
@@ -125,6 +134,8 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	public TextureRegion mSendHomeTextureRegion;
 
 	public GameState gameState;
+	
+	public static RectanglePool RECTANGLE_POOL = new RectanglePool();
 	
 	// ===========================================================
 	// Constructors
@@ -194,7 +205,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	@Override
 	public Scene onLoadScene() {
 		final Scene scene = new Scene(2);
-		//scene.setOnAreaTouchTraversalFrontToBack();
+		scene.setOnAreaTouchTraversalFrontToBack();
 
 		try {
 			final TMXLoader tmxLoader = new TMXLoader(this, this.mEngine.getTextureManager(), TextureOptions.BILINEAR_PREMULTIPLYALPHA, new ITMXTilePropertiesListener() {
@@ -316,31 +327,54 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		for (int i=0; i<5; i++) {
 			addResident();
 		}
-		
 	}
 
 	@Override
 	public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
-		for (FluVilleResident resident : gameState.residents) {
-			if (resident.contains(pSceneTouchEvent.getX(), pSceneTouchEvent.getY())) {
-				Log.d(TAG, "Tapped on a resident");
-				switch (((FluVilleCityHUD)mBoundChaseCamera.getHUD()).currentMenuSelection) {
-				case FluVilleCityHUD.HUD_MENU_IMMUNIZATION:
-					immunizeResident(resident);
-					break;
-				case FluVilleCityHUD.HUD_MENU_SANITIZER:
-					sanitizeResident(resident);
-					break;
-				case FluVilleCityHUD.HUD_MENU_GRAB_RESIDENTS:
-					sendResidentHome(resident);
-					break;
+		if (pSceneTouchEvent.isActionDown()) {
+			for (FluVilleResident resident : gameState.residents) {
+				if (resident.contains(pSceneTouchEvent.getX(), pSceneTouchEvent.getY())) {
+					Log.d(TAG, "Tapped on a resident");
+					switch (((FluVilleCityHUD)mBoundChaseCamera.getHUD()).currentMenuSelection) {
+					case FluVilleCityHUD.HUD_MENU_IMMUNIZATION:
+						immunizeResident(resident);
+						break;
+					case FluVilleCityHUD.HUD_MENU_SANITIZER:
+						sanitizeResident(resident);
+						break;
+					case FluVilleCityHUD.HUD_MENU_GRAB_RESIDENTS:
+						sendResidentHome(resident);
+						break;
+					}
+					return true;
 				}
-				return true;
+			}
+			
+			// Check if the flyers were tapped
+			TMXObject flyer = findLandmark(MAP_LANDMARK_FLYER_1);
+			if (flyer != null) {
+				Rectangle flyerRectangle = RECTANGLE_POOL.obtain(flyer.getX(), flyer.getY(), flyer.getWidth(), flyer.getHeight());
+				boolean collides = flyerRectangle.contains(pSceneTouchEvent.getX(), pSceneTouchEvent.getY());
+				RECTANGLE_POOL.recyclePoolItem(flyerRectangle);
+				if (collides) {
+					displayNews();
+					return true;
+				}
+			}
+			
+			flyer = findLandmark(MAP_LANDMARK_FLYER_2);
+			if (flyer != null) {
+				Rectangle flyerRectangle = RECTANGLE_POOL.obtain(flyer.getX(), flyer.getY(), flyer.getWidth(), flyer.getHeight());
+				boolean collides = flyerRectangle.contains(pSceneTouchEvent.getX(), pSceneTouchEvent.getY());
+				RECTANGLE_POOL.recyclePoolItem(flyerRectangle);
+				if (collides) {
+					displayNews();
+					return true;
+				}
 			}
 		}
-		
-		if (((FluVilleCityHUD)mBoundChaseCamera.getHUD()).currentMenuSelection == FluVilleCityHUD.HUD_MENU_SPONGE) {
-			if (pSceneTouchEvent.isActionMove()) {
+		else if (pSceneTouchEvent.isActionMove()) {
+			if (((FluVilleCityHUD)mBoundChaseCamera.getHUD()).currentMenuSelection == FluVilleCityHUD.HUD_MENU_SPONGE) {
 				// Iterate through the landmarks and clean if we're moving over them
 			}
 		}
@@ -357,10 +391,6 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			gameState.immunizationsRemaining--;
 			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateFluShotsLabel();
 		}
-		
-		//TMXObject flyer = findLandmark(MAP_LANDMARK_SCHOOL);
-		//if (flyer != null)
-			//showArrow((float)(flyer.getX() + (flyer.getWidth() / 2)), (float)(flyer.getY() + flyer.getHeight()), false);
 	}
 	
 	public void sanitizeResident(final FluVilleResident resident) {
@@ -427,21 +457,6 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	}
 	
 	private void displayMessage(final String... messages) {
-		/*
-		runOnUiThread(new Runnable() {
-			
-			@Override
-			public void run() {
-				AlertDialog.Builder alert = new AlertDialog.Builder(FluVilleCityActivity.this);
-				alert.setMessage(message);
-				alert.setPositiveButton("Resume", new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int whichButton) {
-					}
-				});
-				alert.show();
-			}
-		});
-		*/
 		final Scene messageScene = new Scene(1);
 		//messageScene.setBackground(new ColorBackground(1.0f, 1.0f, 1.0f, 1.0f));
 		messageScene.setBackgroundEnabled(false);
@@ -469,7 +484,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 					
 					@Override
 					public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
-						Log.d(TAG, "messageScene onSceneTouchEvent");
+						//Log.d(TAG, "messageScene onSceneTouchEvent");
 						mEngine.getScene().clearChildScene();
 						if (messages.length > 1) {
 							String[] nextMessages = new String[messages.length-1];
@@ -489,8 +504,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		final Sprite arrow = new Sprite(pX, pY, (down) ? mArrowDownTextureRegion : mArrowUpTextureRegion);
 		final float pY2 = (down) ? (pY + 10.0f) : (pY - 10.0f);
 		
-		SequenceEntityModifier modifier = 
-			new SequenceEntityModifier(
+		SequenceEntityModifier modifier = new SequenceEntityModifier(
 					new MoveYModifier(0.5f, pY, pY2),
 					new MoveYModifier(0.5f, pY2, pY),
 					new MoveYModifier(0.5f, pY, pY2),
@@ -505,7 +519,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		arrow.registerEntityModifier(modifier);
 		this.mEngine.getScene().getLastChild().attachChild(arrow);
 
-		this.mEngine.registerUpdateHandler(new TimerHandler(5.0f, new ITimerCallback() {
+		this.mEngine.registerUpdateHandler(new TimerHandler(4.0f, new ITimerCallback() {
 			
 			@Override
 			public void onTimePassed(TimerHandler pTimerHandler) {
@@ -577,5 +591,25 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		displayMessage(getString(R.string.infected_person_warning), getString(R.string.infected_person_instructions));
 		gameState.shownInfectedPersonMessage = true;
 		updatePreviouslyShownMessages("shownInfectedPersonMessage");
+	}
+	
+	public void displayNews() {
+		TMXObject flyer = findLandmark(MAP_LANDMARK_FLYER_1);
+		if (flyer != null)
+			showArrow((float)(flyer.getX() + (flyer.getWidth() / 2)), (float)(flyer.getY() + flyer.getHeight()), false);
+
+		runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				AlertDialog.Builder alert = new AlertDialog.Builder(FluVilleCityActivity.this);
+				alert.setMessage("News feeds from the CDC");
+				alert.setPositiveButton("Resume", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+					}
+				});
+				alert.show();
+			}
+		});
 	}
 }

@@ -16,17 +16,17 @@
  <objectgroup name="objects" width="20" height="15">
   <object name="SpawnPoint1" x="161" y="36" width="28" height="25"/>
   <object name="SpawnPoint2" x="549" y="37" width="22" height="24"/>
-  <object name="Hospital" x="354" y="128" width="59" height="63"/>
-  <object name="Office2" x="256" y="286" width="27" height="28"/>
-  <object name="Office1" x="613" y="190" width="22" height="25"/>
-  <object name="School" x="438" y="416" width="18" height="22"/>
-  <object name="Office3" x="33" y="418" width="27" height="22"/>
+  <object name="HospitalBuilding" x="354" y="128" width="59" height="63"/>
+  <object name="Office2" x="257" y="287" width="23" height="18"/>
+  <object name="Office1" x="613" y="190" width="22" height="20"/>
+  <object name="School" x="439" y="420" width="18" height="18"/>
+  <object name="Office3" x="35" y="417" width="22" height="19"/>
   <object name="Office4" x="291" y="422" width="22" height="22"/>
-  <object name="Store1" x="162" y="163" width="59" height="28"/>
+  <object name="StoreBuilding1" x="162" y="163" width="59" height="28"/>
   <object name="Flyers1" x="34" y="109" width="34" height="17"/>
   <object name="Flyers2" x="449" y="110" width="32" height="15"/>
-  <object name="Store2" x="546" y="258" width="59" height="25"/>
-  <object name="Pizza" x="147" y="417" width="24" height="25"/>
+  <object name="StoreBuilding2" x="546" y="258" width="59" height="25"/>
+  <object name="Pizza" x="155" y="421" width="19" height="15"/>
   <object name="TopLeftResidentialCorner" x="99" y="36" width="23" height="22"/>
   <object name="TopRightResidentialCorner" x="520" y="39" width="14" height="20"/>
   <object name="TopLeftIntersection" x="100" y="193" width="24" height="21"/>
@@ -35,5 +35,16 @@
   <object name="MiddleRightIntersection" x="518" y="291" width="20" height="19"/>
   <object name="BottomLeftIntersection" x="101" y="418" width="22" height="23"/>
   <object name="BottomRightIntersection" x="515" y="418" width="25" height="21"/>
+  <object name="SpawnPointBuilding2" x="580" y="3" width="56" height="90"/>
+  <object name="SpawnPointBuilding1" x="197" y="33" width="55" height="61"/>
+  <object name="Store1" x="185" y="196" width="19" height="16"/>
+  <object name="Hospital" x="390" y="194" width="20" height="18"/>
+  <object name="Store2" x="575" y="291" width="15" height="15"/>
+  <object name="OfficeBuilding1" x="581" y="134" width="55" height="53"/>
+  <object name="OfficeBuilding2" x="228" y="227" width="56" height="57"/>
+  <object name="OfficeBuilding3" x="3" y="356" width="55" height="57"/>
+  <object name="PizzaBuilding" x="130" y="354" width="58" height="57"/>
+  <object name="SchoolBuilding" x="418" y="386" width="60" height="27"/>
+  <object name="OfficeBuilding4" x="259" y="449" width="58" height="29"/>
  </objectgroup>
 </map>
