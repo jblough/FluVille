@@ -68,7 +68,7 @@ public class FluVilleResident extends AnimatedSprite {
 		this.isWalking = false;
 		this.wasSentHomeSick = false;
 		
-		this.protectionLabel = new ChangeableText(0, 0, this.activity.mMenuFont, "10");
+		this.protectionLabel = new ChangeableText(-10.0f, 0, this.activity.mMenuFont, "10");
 	}
 
 	public void walk() {
@@ -323,7 +323,7 @@ public class FluVilleResident extends AnimatedSprite {
 		attachChild(protectionLabel);
 	}
 	
-	public void reduceSanitizerProtect() {
+	public void reduceSanitizerProtection() {
 		hoursOfSanitizerRemaining--;
 		if (hoursOfSanitizerRemaining > 0) {
 			protectionLabel.setText("" + hoursOfSanitizerRemaining);

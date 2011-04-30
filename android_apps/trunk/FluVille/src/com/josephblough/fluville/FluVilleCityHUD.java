@@ -3,12 +3,10 @@ package com.josephblough.fluville;
 import org.anddev.andengine.engine.camera.hud.HUD;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene.IOnAreaTouchListener;
-import org.anddev.andengine.engine.handler.timer.ITimerCallback;
-import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.entity.text.ChangeableText;
 import org.anddev.andengine.input.touch.TouchEvent;
-import org.anddev.andengine.util.MathUtils;
+import org.anddev.andengine.util.HorizontalAlign;
 
 import android.util.Log;
 
@@ -23,7 +21,9 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 	public static final int HUD_MENU_SPONGE = 4;
 	
 	private FluVilleCityActivity activity;
-	private boolean safeToReleaseMoreWalkers = true;
+	
+	public int currentMenuSelection = HUD_MENU_NONE;
+	
 	private ChangeableText dayLabel;
 	private ChangeableText hourOfDayLabel;
 	private Rectangle fluShotMenuItem;
@@ -32,11 +32,12 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 	private Rectangle spongeMenuItem;
 	private ChangeableText fluShotsRemainingLabel;
 	private ChangeableText handSanitizerRemainingLabel;
-	public int currentMenuSelection = HUD_MENU_NONE;
+	private Rectangle infectedResidentGaugeBox;
+	private Rectangle infectedResidentGauge;
+	private ChangeableText infectedResidentLabel;
 	
 	public FluVilleCityHUD(final FluVilleCityActivity activity) {
 		super();
-		this.safeToReleaseMoreWalkers = true;
 		this.activity = activity;
 		float x = (float)this.activity.getMapWidth() + (float)((FluVilleCityActivity.CAMERA_WIDTH - this.activity.getMapWidth()) / 3);
 		float y = 20.f;
@@ -116,10 +117,35 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 				dragResidentMenuItem.getHeight() / 2 - dragResidentMenuImage.getHeight() / 2);
 		dragResidentMenuItem.attachChild(dragResidentMenuImage);
 
+		// Gauge indicator at the bottom of the screen
+		infectedResidentGaugeBox = new Rectangle(this.activity.getMapWidth() + 5.0f, 
+				(FluVilleCityActivity.CAMERA_HEIGHT - 75.0f), 
+				(FluVilleCityActivity.CAMERA_WIDTH - this.activity.getMapWidth()) - 10.0f, 20.0f);
+		infectedResidentGaugeBox.setColor(0.77f, 0.77f, 0.77f);
+		this.getLastChild().attachChild(infectedResidentGaugeBox);
+		
+		infectedResidentGauge = new Rectangle(0, 0, 0, infectedResidentGaugeBox.getHeight());
+		infectedResidentGauge.setColor(1.0f, 0.0f, 0.0f);
+		infectedResidentGaugeBox.attachChild(infectedResidentGauge);
+		
+		infectedResidentLabel = new ChangeableText(0, 0, activity.mMenuFont, "", HorizontalAlign.CENTER, "100/100 infected".length());
+		infectedResidentLabel.setWidth((FluVilleCityActivity.CAMERA_WIDTH - this.activity.getMapWidth()));
+		infectedResidentLabel.setPosition(x, infectedResidentGaugeBox.getY() + infectedResidentGaugeBox.getHeight() + 2.0f);
+		this.getLastChild().attachChild(infectedResidentLabel);
+		
+		updateInfectionRateLabels();
 		
 		this.setOnAreaTouchListener(this);
 	}
 
+	public void updateInfectionRateLabels() {
+		int infected = activity.getInfectedResidentCount();
+		int total = activity.gameState.residents.size();
+		float percentage = (float)infected / (float)total;
+		infectedResidentGauge.setWidth(infectedResidentGaugeBox.getWidth() * percentage);
+		infectedResidentLabel.setText(infected + "/" + total + " infected");
+	}
+	
 	@Override
 	public boolean onAreaTouched(TouchEvent pSceneTouchEvent, ITouchArea pTouchArea, float pTouchAreaLocalX, float pTouchAreaLocalY) {
 		if (pTouchArea.equals(fluShotMenuItem)) {
@@ -170,30 +196,6 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 		updateMenuHilight();
 		
 		return false;
-	}
-	
-	public void releaseWalkers() {
-		if (safeToReleaseMoreWalkers) {
-			Log.d(TAG, "Sending out resident");
-			safeToReleaseMoreWalkers = false;
-			for (int i=0; i<5; i++) {
-				registerUpdateHandler(new TimerHandler(MathUtils.random(0.1f, 5.0f), new ITimerCallback() {
-
-					@Override
-					public void onTimePassed(TimerHandler pTimerHandler) {
-						activity.addResident();
-					}
-				}));
-			}
-
-			registerUpdateHandler(new TimerHandler(0.5f, new ITimerCallback() {
-
-				@Override
-				public void onTimePassed(TimerHandler pTimerHandler) {
-					safeToReleaseMoreWalkers = true;
-				}
-			}));
-		}
 	}
 	
 	private void updateMenuHilight() {

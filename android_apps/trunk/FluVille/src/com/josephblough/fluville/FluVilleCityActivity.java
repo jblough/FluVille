@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.camera.Camera;
@@ -138,7 +139,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 
 	public GameState gameState;
 	
-	private Map<String, Rectangle> infectedBuildingMap = new HashMap<String, Rectangle>();
+	private Map<String, Rectangle> infectedBuildingMap = new ConcurrentHashMap<String, Rectangle>();
 	
 	public static RectanglePool RECTANGLE_POOL = new RectanglePool();
 	
@@ -264,6 +265,8 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			public void onTimePassed(TimerHandler pTimerHandler) {
 				if (gameState.stateOfPlay == GameState.STATE_OF_PLAY_RUNNING) {
 					checkForMoreInfections();
+
+					((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateInfectionRateLabels();
 				}
 			}
 		}));
@@ -299,12 +302,12 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		for (final FluVilleResident resident : gameState.residents) {
 			// Decrease any accumulations that we're keeping track of for the resident
 			if (resident.hoursOfSanitizerRemaining > 0) {
-				resident.reduceSanitizerProtect();
+				resident.reduceSanitizerProtection();
 			}
 
 			// Get the residents walking again
 			if (!resident.isWalking && !resident.isAtWork() && !resident.wasSentHomeSick) {
-				this.mEngine.registerUpdateHandler(new TimerHandler(MathUtils.random(0.0f, 0.9f), new ITimerCallback() {
+				this.mEngine.registerUpdateHandler(new TimerHandler(MathUtils.random(0.1f, 1.9f), new ITimerCallback() {
 					@Override
 					public void onTimePassed(TimerHandler pTimerHandler) {
 						mEngine.getScene().getLastChild().attachChild(resident);
@@ -312,7 +315,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 						
 						if (!gameState.shownInfectedPersonMessage && resident.infected) {
 							// Set a delay so the infected resident is clearly visible on the screen
-							mEngine.registerUpdateHandler(new TimerHandler(MathUtils.random(0.1f, 0.9f), new ITimerCallback() {
+							mEngine.registerUpdateHandler(new TimerHandler(0.1f, new ITimerCallback() {
 								@Override
 								public void onTimePassed(TimerHandler pTimerHandler) {
 									displayInfectedPersonWarning(resident);
@@ -323,7 +326,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 				}));
 			}
 			else if (!resident.isWalking && resident.isAtWork()) {
-				this.mEngine.registerUpdateHandler(new TimerHandler(MathUtils.random(0.0f, 0.9f), new ITimerCallback() {
+				this.mEngine.registerUpdateHandler(new TimerHandler(MathUtils.random(0.1f, 1.9f), new ITimerCallback() {
 					@Override
 					public void onTimePassed(TimerHandler pTimerHandler) {
 						mEngine.getScene().getLastChild().attachChild(resident);
@@ -356,11 +359,13 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		
 		// Increase flu shot vaccines, hand sanitizer doses available when appropriate
 		if (gameState.day % GameState.DAYS_BETWEEN_FLU_SHOT_REFILLS == 0) {
-			gameState.immunizationsRemaining += GameState.FLU_SHOT_REFILL_SIZE;
+			gameState.immunizationsRemaining = 
+				Math.min(gameState.immunizationsRemaining + GameState.FLU_SHOT_REFILL_SIZE, GameState.MAX_FLU_SHOT_DOSES);
 			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateFluShotsLabel();
 		}
 		if (gameState.day % GameState.DAYS_BETWEEN_HAND_SANITIZER_REFILLS == 0) {
-			gameState.handSanitizerDosesRemaining += GameState.HAND_SANITIZER_REFILL_SIZE;
+			gameState.handSanitizerDosesRemaining = 
+				Math.min(gameState.handSanitizerDosesRemaining + GameState.HAND_SANITIZER_REFILL_SIZE, GameState.MAX_HAND_SANITIZER_DOSES);
 			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateHandSanitizersLabel();
 		}
 
@@ -377,13 +382,10 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 
 	@Override
 	public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
-		Log.d(TAG, "Action: " + pSceneTouchEvent.getAction() + ", DOWN: " + TouchEvent.ACTION_DOWN + 
-				", UP: " + TouchEvent.ACTION_UP + ", MOVE: " + TouchEvent.ACTION_MOVE + ", OUTSIDE: " + TouchEvent.ACTION_OUTSIDE + 
-				", CANCEL: " + TouchEvent.ACTION_CANCEL);
 		if (pSceneTouchEvent.isActionDown()) {
 			for (FluVilleResident resident : gameState.residents) {
 				if (resident.contains(pSceneTouchEvent.getX(), pSceneTouchEvent.getY())) {
-					Log.d(TAG, "Tapped on a resident");
+					//Log.d(TAG, "Tapped on a resident");
 					switch (((FluVilleCityHUD)mBoundChaseCamera.getHUD()).currentMenuSelection) {
 					case FluVilleCityHUD.HUD_MENU_IMMUNIZATION:
 						immunizeResident(resident);
@@ -458,6 +460,10 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			resident.immunize();
 			gameState.immunizationsRemaining--;
 			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateFluShotsLabel();
+			
+			if (!gameState.shownLimitedSuppliesMessage && gameState.immunizationsRemaining == 0) {
+				displayLimitedSuppliesMessage();
+			}
 		}
 	}
 	
@@ -467,11 +473,15 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			resident.applyHandSanitizer();
 			gameState.handSanitizerDosesRemaining--;
 			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateHandSanitizersLabel();
+			
+			if (!gameState.shownLimitedSuppliesMessage && gameState.handSanitizerDosesRemaining == 0) {
+				displayLimitedSuppliesMessage();
+			}
 		}
 	}
 	
 	public void sendResidentHome(final FluVilleResident resident) {
-		Log.d(TAG, "Sending a resident home sick");
+		//Log.d(TAG, "Sending a resident home sick");
 		resident.sendHome();
 	}
 	
@@ -610,6 +620,8 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		//gameState.shownSpongeMessage = preferences.getBoolean("shownSpongeMessage", false);
 		//gameState.shownSendHomeMessage = preferences.getBoolean("shownSendHomeMessage", false);
 		//gameState.shownInfectedPersonMessage = preferences.getBoolean("shownInfectedPersonMessage", false);
+		//gameState.shownInfectedBuildingMessage = preferences.getBoolean("shownInfectedBuildingMessage", false);
+		//gameState.shownLimitedSuppliesMessage = preferences.getBoolean("shownLimitedSuppliesMessage", false);
 	}
 	
 	public void updatePreviouslyShownMessages(final String messageToUpdate) {
@@ -629,42 +641,63 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		editor.putBoolean("shownSpongeMessage", gameState.shownSpongeMessage);
 		editor.putBoolean("shownSendHomeMessage", gameState.shownSendHomeMessage);
 		editor.putBoolean("shownInfectedPersonMessage", gameState.shownInfectedPersonMessage);
+		editor.putBoolean("shownInfectedBuildingMessage", gameState.shownInfectedBuildingMessage);
+		editor.putBoolean("shownLimitedSuppliesMessage", gameState.shownLimitedSuppliesMessage);
 	}
 	
 	public void displayImmunizationBenefits() {
-		Log.d(TAG, "displayImmunizationBenefits");
+		//Log.d(TAG, "displayImmunizationBenefits");
 		displayMessage(getString(R.string.immunization_benefits), getString(R.string.immunization_instructions));
 		gameState.shownImmunizationMessage = true;
 		updatePreviouslyShownMessages("shownImmunizationMessage");
 	}
 
 	public void displayHandSanitizerBenefits() {
-		Log.d(TAG, "displayHandSanitizerBenefits");
+		//Log.d(TAG, "displayHandSanitizerBenefits");
 		displayMessage(getString(R.string.sanitizer_benefits), getString(R.string.sanitizer_instructions));
 		gameState.shownSanitizerMessage = true;
 		updatePreviouslyShownMessages("shownSanitizerMessage");
 	}
 
 	public void displaySpongeUsage() {
-		Log.d(TAG, "displaySpongeUsage");
+		//Log.d(TAG, "displaySpongeUsage");
 		displayMessage(getString(R.string.sponge_usage), getString(R.string.sponge_instructions));
 		gameState.shownSpongeMessage = true;
 		updatePreviouslyShownMessages("shownSpongeMessage");
 	}
 	
 	public void displaySendResidentHomeUsage() {
-		Log.d(TAG, "displaySendResidentHomeUsage");
+		//Log.d(TAG, "displaySendResidentHomeUsage");
 		displayMessage(getString(R.string.send_residents_home_reason), getString(R.string.send_residents_home_instructions));
 		gameState.shownSendHomeMessage = true;
 		updatePreviouslyShownMessages("shownSendHomeMessage");
 	}
 	
 	public void displayInfectedPersonWarning(final FluVilleResident resident) {
-		Log.d(TAG, "displayInfectedPersonWarning");
+		//Log.d(TAG, "displayInfectedPersonWarning");
 		showArrow(resident.getX(), (resident.getY() + resident.getHeight()), false);
 		displayMessage(getString(R.string.infected_person_warning), getString(R.string.infected_person_instructions));
 		gameState.shownInfectedPersonMessage = true;
 		updatePreviouslyShownMessages("shownInfectedPersonMessage");
+	}
+	
+	public void displayInfectedBuildingWarning(final TMXObject building) {
+		if (building.getY() > (CAMERA_HEIGHT * 2 / 3)) {
+			showArrow(building.getX() + (building.getWidth() / 2), (building.getY() + building.getHeight()), false);
+		}
+		else {
+			showArrow(building.getX(), building.getY(), true);
+		}
+		
+		displayMessage(getString(R.string.infected_building_warning), getString(R.string.sponge_instructions));
+		gameState.shownInfectedBuildingMessage = true;
+		updatePreviouslyShownMessages("shownInfectedBuildingMessage");
+	}
+	
+	public void displayLimitedSuppliesMessage() {
+		displayMessage(getString(R.string.limited_supplies_warning));
+		gameState.shownLimitedSuppliesMessage = true;
+		updatePreviouslyShownMessages("shownLimitedSuppliesMessage");
 	}
 	
 	public void displayNews() {
@@ -694,6 +727,19 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			buildingRectangle.setColor(1.0f, 0.0f, 0.0f, 0.30f);
 			this.infectedBuildingMap.put(building.getName(), buildingRectangle);
 			mEngine.getScene().getLastChild().attachChild(buildingRectangle);
+			if (!gameState.shownInfectedBuildingMessage)
+				displayInfectedBuildingWarning(building);
+			
+			// All of the residents currently in the building become infected
+			Set<FluVilleResident> residents = getSusceptibleResidents();
+			for (FluVilleResident resident : residents) {
+				if (resident.currentDestination != null && 
+						resident.currentDestination.getName().equals(building.getName()) && // Is the building, they're destination?
+						!resident.isWalking && // The resident isn't walking if they're already in the building
+						resident.collidesWith(buildingRectangle)) { // Final check to make sure that they're in the building
+					resident.infect();
+				}
+			}
 		}
 	}
 		
@@ -772,6 +818,15 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 				residentWithIncreasedExposure.infect();
 			}
 		}
+	}
+
+	public int getInfectedResidentCount() {
+		int count = 0;
+		for (FluVilleResident resident : gameState.residents) {
+			if (resident.infected)
+				count++;
+		}
+		return count;
 	}
 
 	private Set<FluVilleResident> getVisibleInfectedResidents() {
