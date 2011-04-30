@@ -252,7 +252,9 @@ public class FluVilleResident extends AnimatedSprite {
 					public void run() {
 						scene.getLastChild().detachChild(FluVilleResident.this);
 						isWalking = false;
-						if (!infected && !currentDestination.getName().equals(home.getName()) && activity.isBuildingInfected(currentDestination))
+						if (!infected && !immunized && hoursOfSanitizerRemaining < 1 && 
+								!currentDestination.getName().equals(home.getName()) && 
+								activity.isBuildingInfected(currentDestination))
 							infect();
 					}
 				});
