@@ -13,6 +13,9 @@ public class GameState {
 	public static final int MAX_FLU_SHOT_REFILLS = 10;
 	public static final int MAX_HAND_SANITIZER_REFILLS = 10;
 	
+	public static final int STATE_OF_PLAY_RUNNING = 0;
+	public static final int STATE_OF_PLAY_PAUSED = 1;
+	
 	public int day;
 	public int hourOfDay;
 	public int immunizationsRemaining;
@@ -26,11 +29,14 @@ public class GameState {
 	public boolean shownSendHomeMessage = false;
 	public boolean shownInfectedPersonMessage = false;
 	
+	public int stateOfPlay;
+	
 	public GameState() {
 		day = 1;
 		hourOfDay = 0;
 		immunizationsRemaining = FLU_SHOT_REFILL_SIZE;
 		handSanitizerDosesRemaining = HAND_SANITIZER_REFILL_SIZE;
+		stateOfPlay = STATE_OF_PLAY_RUNNING;
 		residents = new ArrayList<FluVilleResident>();
 	}
 }

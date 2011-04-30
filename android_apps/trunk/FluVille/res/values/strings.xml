@@ -6,11 +6,11 @@
     <string name="immunization_benefits">CDC recommends a yearly flu vaccine as the first\nand most important step in protecting\nagainst flu viruses.</string>
     <string name="immunization_instructions">Tap on a resident to immunize them.\nThey will be enclosed in a green bubble to\nidentify that they are safe from infection.</string>
     <string name="sanitizer_benefits">Washing your hands often will help\nprotect you from germs.  If soap and water are not\navailable, use an alcohol-based hand rub.</string>
-    <string name="sanitizer_instructions">Tap on a resident to provide them with hand sanitizer.\nHand sanitizer protects them for 5 hours\nrepresented by a number to the left of the resident.</string>
+    <string name="sanitizer_instructions">Tap on a resident to provide them with hand sanitizer.\nHand sanitizer protects them for 12 hours\nrepresented by a number to the left of the resident.</string>
     <string name="sponge_usage">Germs are often spread when a person\ntouches something that is contaminated with germs and\nthen touches his or her eyes, nose, or mouth.</string>
     <string name="sponge_instructions">Move your finger over a contaminated building\nto clean the building and reduce the chance of\ninfections within that building.</string>
     <string name="send_residents_home_reason">If possible, stay home from work, school, and\nerrands when you are sick.\nYou will help prevent those around you\nfrom getting sick.</string>
     <string name="send_residents_home_instructions">Tap on a resident to send them home and keep\nthem from infecting other residents on\nthe streets, in their work place, or in the school.</string>
-    <string name="infected_person_warning">People with flu can spread it to\nothers up to about 6 feet away.</string>
+    <string name="infected_person_warning">People with flu can spread it to\nothers up to about 6 feet away.\nFlu carriers are contagious from one day\nbefore showing symptoms to 5-7 days afterward.\nInfected residents are enclosed in a red bubble to\nidentify that they are contagious.</string>
     <string name="infected_person_instructions">Make sure that residents around the infected\nresident are immunized or\nhave been given hand sanitizer.\nSend the infected resident home as\nsoon as possible.</string>
 </resources>

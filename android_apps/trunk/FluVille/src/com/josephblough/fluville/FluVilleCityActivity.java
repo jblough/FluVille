@@ -1,6 +1,10 @@
 package com.josephblough.fluville;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.camera.Camera;
@@ -62,7 +66,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	//public static final int CAMERA_WIDTH = 480;
 	//public static final int CAMERA_HEIGHT = 320;
 	
-	public static final float SECONDS_PER_FLUVILLE_HOUR = 5.0f;
+	public static final float SECONDS_PER_FLUVILLE_HOUR = 2.0f;
 	
 	public static final String MAP_LANDMARK_LEFT_RESIDENTIAL_INTERSECTION = "TopLeftResidentialCorner";
 	public static final String MAP_LANDMARK_RIGHT_RESIDENTIAL_INTERSECTION = "TopRightResidentialCorner";
@@ -129,11 +133,12 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	private Texture mMenuItemsTexture;
 	public TextureRegion mImmunizationTextureRegion;
 	public TextureRegion mSanitizerTextureRegion;
-	//public TextureRegion mTissueTextureRegion;
 	public TextureRegion mSpongeTextureRegion;
 	public TextureRegion mSendHomeTextureRegion;
 
 	public GameState gameState;
+	
+	private Map<String, Rectangle> infectedBuildingMap = new HashMap<String, Rectangle>();
 	
 	public static RectanglePool RECTANGLE_POOL = new RectanglePool();
 	
@@ -246,20 +251,38 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	public void onLoadComplete() {
 		for (int i=0; i<5; i++) {
 			addResident();
+			
+			if (i < 1) {
+				gameState.residents.get(gameState.residents.size() - 1).infect();
+			}
 		}
 
+		// Update handler to check if more residents are infected
+		this.mEngine.registerUpdateHandler(new TimerHandler(1.0f, true, new ITimerCallback() {
+			
+			@Override
+			public void onTimePassed(TimerHandler pTimerHandler) {
+				if (gameState.stateOfPlay == GameState.STATE_OF_PLAY_RUNNING) {
+					checkForMoreInfections();
+				}
+			}
+		}));
+		
+		// Update handler to handle time passing
 		this.mEngine.registerUpdateHandler(new TimerHandler(SECONDS_PER_FLUVILLE_HOUR, true, new ITimerCallback() {
 			
 			@Override
 			public void onTimePassed(TimerHandler pTimerHandler) {
-				if (gameState.hourOfDay < 23) {
-					incrementHour();
+				if (gameState.stateOfPlay == GameState.STATE_OF_PLAY_RUNNING) {
+					if (gameState.hourOfDay < 23) {
+						incrementHour();
+					}
+					else {
+						incrementDay();
+					}
+					
+					((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateClock();
 				}
-				else {
-					incrementDay();
-				}
-				
-				((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateClock();
 			}
 		}));
 
@@ -273,23 +296,40 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	private void incrementHour() {
 		gameState.hourOfDay++;
 
-		for (FluVilleResident resident : gameState.residents) {
+		for (final FluVilleResident resident : gameState.residents) {
 			// Decrease any accumulations that we're keeping track of for the resident
 			if (resident.hoursOfSanitizerRemaining > 0) {
 				resident.reduceSanitizerProtect();
 			}
 
 			// Get the residents walking again
-			if (!resident.isWalking && !resident.isAtWork()) {
-				//Log.d(TAG, "Sending resident to work from home");
-				mEngine.getScene().getLastChild().attachChild(resident);
-				resident.walk(resident.placeOfWork);
+			if (!resident.isWalking && !resident.isAtWork() && !resident.wasSentHomeSick) {
+				this.mEngine.registerUpdateHandler(new TimerHandler(MathUtils.random(0.0f, 0.9f), new ITimerCallback() {
+					@Override
+					public void onTimePassed(TimerHandler pTimerHandler) {
+						mEngine.getScene().getLastChild().attachChild(resident);
+						resident.walk(resident.placeOfWork);
+						
+						if (!gameState.shownInfectedPersonMessage && resident.infected) {
+							// Set a delay so the infected resident is clearly visible on the screen
+							mEngine.registerUpdateHandler(new TimerHandler(MathUtils.random(0.1f, 0.9f), new ITimerCallback() {
+								@Override
+								public void onTimePassed(TimerHandler pTimerHandler) {
+									displayInfectedPersonWarning(resident);
+								}
+							}));
+						}
+					}
+				}));
 			}
 			else if (!resident.isWalking && resident.isAtWork()) {
-				// Go home
-				//Log.d(TAG, "Sending resident home from work");
-				mEngine.getScene().getLastChild().attachChild(resident);
-				resident.walk(resident.home);
+				this.mEngine.registerUpdateHandler(new TimerHandler(MathUtils.random(0.0f, 0.9f), new ITimerCallback() {
+					@Override
+					public void onTimePassed(TimerHandler pTimerHandler) {
+						mEngine.getScene().getLastChild().attachChild(resident);
+						resident.walk(resident.home);
+					}
+				}));
 			}
 		}
 	}
@@ -308,9 +348,10 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			}
 			
 			// Reset sanitizer at the beginning of each day
-			if (resident.hoursOfSanitizerRemaining > 0) {
-				resident.hoursOfSanitizerRemaining = 0;
-			}
+			resident.hoursOfSanitizerRemaining = 0;
+			
+			// Reset sent home sick flag
+			resident.wasSentHomeSick = false;
 		}
 		
 		// Increase flu shot vaccines, hand sanitizer doses available when appropriate
@@ -324,13 +365,21 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		}
 
 		// Add more residents
+		// Randomly infect 1 resident * the day number (up to 5)
 		for (int i=0; i<5; i++) {
 			addResident();
+			
+			if (i < 1) {
+				gameState.residents.get(gameState.residents.size() - 1).infect();
+			}
 		}
 	}
 
 	@Override
 	public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
+		Log.d(TAG, "Action: " + pSceneTouchEvent.getAction() + ", DOWN: " + TouchEvent.ACTION_DOWN + 
+				", UP: " + TouchEvent.ACTION_UP + ", MOVE: " + TouchEvent.ACTION_MOVE + ", OUTSIDE: " + TouchEvent.ACTION_OUTSIDE + 
+				", CANCEL: " + TouchEvent.ACTION_CANCEL);
 		if (pSceneTouchEvent.isActionDown()) {
 			for (FluVilleResident resident : gameState.residents) {
 				if (resident.contains(pSceneTouchEvent.getX(), pSceneTouchEvent.getY())) {
@@ -347,6 +396,18 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 						break;
 					}
 					return true;
+				}
+			}
+			
+			// Clean infected buildings
+			if (((FluVilleCityHUD)mBoundChaseCamera.getHUD()).currentMenuSelection == FluVilleCityHUD.HUD_MENU_SPONGE) {
+				// Iterate through the infected landmarks and clean if we're moving over them
+				for (Entry<String, Rectangle> buildingEntry : infectedBuildingMap.entrySet()) {
+					Rectangle buildingRectangle = buildingEntry.getValue();
+					if (buildingRectangle.contains(pSceneTouchEvent.getX(), pSceneTouchEvent.getY())) {
+						cleanBuilding(findLandmark(buildingEntry.getKey()));
+						return true;
+					}
 				}
 			}
 			
@@ -375,7 +436,14 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		}
 		else if (pSceneTouchEvent.isActionMove()) {
 			if (((FluVilleCityHUD)mBoundChaseCamera.getHUD()).currentMenuSelection == FluVilleCityHUD.HUD_MENU_SPONGE) {
-				// Iterate through the landmarks and clean if we're moving over them
+				// Iterate through the infected landmarks and clean if we're moving over them
+				for (Entry<String, Rectangle> buildingEntry : infectedBuildingMap.entrySet()) {
+					Rectangle buildingRectangle = buildingEntry.getValue();
+					if (buildingRectangle.contains(pSceneTouchEvent.getX(), pSceneTouchEvent.getY())) {
+						cleanBuilding(findLandmark(buildingEntry.getKey()));
+						return true;
+					}
+				}
 			}
 		}
 
@@ -433,7 +501,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	}
 	
 	private TMXObject getRandomDestination() {
-		switch (MathUtils.random(0, 5)) {
+		switch (MathUtils.random(0, 8)) {
 		case 0:
 			return mapObjects.get(MAP_LANDMARK_PIZZA);
 		case 1:
@@ -442,12 +510,16 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			return mapObjects.get(MAP_LANDMARK_OFFICE_2);
 		case 3:
 			return mapObjects.get(MAP_LANDMARK_OFFICE_3);
-		//case 4:
-			//return mapObjects.get(MAP_LANDMARK_OFFICE_4);
 		case 4:
-			return mapObjects.get(MAP_LANDMARK_STORE_1);
+			return mapObjects.get(MAP_LANDMARK_OFFICE_4);
 		case 5:
+			return mapObjects.get(MAP_LANDMARK_STORE_1);
+		case 6:
 			return mapObjects.get(MAP_LANDMARK_STORE_2);
+		case 7:
+			return mapObjects.get(MAP_LANDMARK_HOSPITAL);
+		case 8:
+			return mapObjects.get(MAP_LANDMARK_SCHOOL);
 		}
 		return null;
 	}
@@ -457,26 +529,25 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	}
 	
 	private void displayMessage(final String... messages) {
+		gameState.stateOfPlay = GameState.STATE_OF_PLAY_PAUSED;
 		final Scene messageScene = new Scene(1);
-		//messageScene.setBackground(new ColorBackground(1.0f, 1.0f, 1.0f, 1.0f));
 		messageScene.setBackgroundEnabled(false);
 		final Sprite bubble = new Sprite(0, 0, mSpeechBubble);
 		final Text text = new Text(0.0f, 0.0f, FluVilleCityActivity.this.mDialogFont, messages[0]);
-		//bubble.setHeight(CAMERA_HEIGHT * 2.0f / 3.0f/* 400.0f*/);
-		//bubble.setWidth(CAMERA_WIDTH * 2.0f / 3.0f/* 100.0f*/);
 		bubble.setWidth(text.getWidth() + 25.0f);
 		bubble.setHeight(text.getHeight() + 125.0f);
+		
 		// Center the text
 		text.setPosition((bubble.getWidth() - text.getWidth()) / 2, 25.0f/*(bubble.getHeight() - text.getHeight()) / 2*/);
 		bubble.attachChild(text);
+		
 		// Bottom left corner
 		bubble.setPosition(0.0f, CAMERA_HEIGHT - bubble.getHeight());
 		messageScene.attachChild(bubble);
-		//messageScene.attachChild(new Text(10.0f, 80.f, FluVilleCityActivity.this.mDialogFont, message));
 		mEngine.getScene().setChildScene(messageScene, false, true, true);
 
 		// Keep the dialog up for at least a second before registering a removal handler
-		this.mEngine.registerUpdateHandler(new TimerHandler(1.0f, new ITimerCallback() {
+		this.mEngine.registerUpdateHandler(new TimerHandler(0.5f, new ITimerCallback() {
 			
 			@Override
 			public void onTimePassed(TimerHandler pTimerHandler) {
@@ -492,6 +563,9 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 								nextMessages[i-1] = messages[i];
 							}
 							displayMessage(nextMessages);
+						}
+						else {
+							gameState.stateOfPlay = GameState.STATE_OF_PLAY_RUNNING;
 						}
 						return true;
 					}
@@ -512,8 +586,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 					new MoveYModifier(0.5f, pY, pY2),
 					new MoveYModifier(0.5f, pY2, pY),
 					new MoveYModifier(0.5f, pY, pY2),
-					new MoveYModifier(0.5f, pY2, pY)//,
-					//new FadeOutModifier(3.0f)
+					new MoveYModifier(0.5f, pY2, pY)
 					);
 		
 		arrow.registerEntityModifier(modifier);
@@ -586,8 +659,9 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		updatePreviouslyShownMessages("shownSendHomeMessage");
 	}
 	
-	public void displayInfectedPersonWarning() {
+	public void displayInfectedPersonWarning(final FluVilleResident resident) {
 		Log.d(TAG, "displayInfectedPersonWarning");
+		showArrow(resident.getX(), (resident.getY() + resident.getHeight()), false);
 		displayMessage(getString(R.string.infected_person_warning), getString(R.string.infected_person_instructions));
 		gameState.shownInfectedPersonMessage = true;
 		updatePreviouslyShownMessages("shownInfectedPersonMessage");
@@ -611,5 +685,113 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 				alert.show();
 			}
 		});
+	}
+	
+	public void infectBuilding(final TMXObject destination) {
+		TMXObject building = getBuildingForDestination(destination.getName());
+		if (building != null && !this.infectedBuildingMap.containsKey(building.getName())) {
+			Rectangle buildingRectangle = RECTANGLE_POOL.obtain(building.getX(), building.getY(), building.getWidth(), building.getHeight());
+			buildingRectangle.setColor(1.0f, 0.0f, 0.0f, 0.30f);
+			this.infectedBuildingMap.put(building.getName(), buildingRectangle);
+			mEngine.getScene().getLastChild().attachChild(buildingRectangle);
+		}
+	}
+		
+	public void cleanBuilding(final TMXObject building) {
+		runOnUpdateThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				Rectangle buildingRectangle = infectedBuildingMap.get(building.getName());
+				mEngine.getScene().getLastChild().detachChild(buildingRectangle);
+				RECTANGLE_POOL.recyclePoolItem(buildingRectangle);
+				infectedBuildingMap.remove(building.getName());
+			}
+		});
+	}
+	
+	private TMXObject getBuildingForDestination(final String destinationName) {
+		if (MAP_LANDMARK_HOSPITAL.equals(destinationName)) {
+			return findLandmark(MAP_LANDMARK_HOSPITAL_BLDG);
+		}
+		else if (MAP_LANDMARK_OFFICE_1.equals(destinationName)) {
+			return findLandmark(MAP_LANDMARK_OFFICE_1_BLDG);
+		}
+		else if (MAP_LANDMARK_OFFICE_2.equals(destinationName)) {
+			return findLandmark(MAP_LANDMARK_OFFICE_2_BLDG);
+		}
+		else if (MAP_LANDMARK_OFFICE_3.equals(destinationName)) {
+			return findLandmark(MAP_LANDMARK_OFFICE_3_BLDG);
+		}
+		else if (MAP_LANDMARK_OFFICE_4.equals(destinationName)) {
+			return findLandmark(MAP_LANDMARK_OFFICE_4_BLDG);
+		}
+		else if (MAP_LANDMARK_PIZZA.equals(destinationName)) {
+			return findLandmark(MAP_LANDMARK_PIZZA_BLDG);
+		}
+		else if (MAP_LANDMARK_STORE_1.equals(destinationName)) {
+			return findLandmark(MAP_LANDMARK_STORE_1_BLDG);
+		}
+		else if (MAP_LANDMARK_STORE_2.equals(destinationName)) {
+			return findLandmark(MAP_LANDMARK_STORE_2_BLDG);
+		}
+		else if (MAP_LANDMARK_SCHOOL.equals(destinationName)) {
+			return findLandmark(MAP_LANDMARK_SCHOOL_BLDG);
+		}
+		return null;
+	}
+	
+	public boolean isBuildingInfected(final TMXObject destination) {
+		TMXObject building = getBuildingForDestination(destination.getName());
+		if (building != null) {
+			return infectedBuildingMap.containsKey(building.getName());
+		}
+		return false;
+	}
+	
+	public synchronized void checkForMoreInfections() {
+		// Iterate through all residents that are on the screen and see if they're 
+		//	infected and around any other residents
+		Set<FluVilleResident> residentsInProximity = new HashSet<FluVilleResident>();
+		Set<FluVilleResident> susceptibleResidents = getSusceptibleResidents();
+		Set<FluVilleResident> infectedResidents = getVisibleInfectedResidents();
+		for (FluVilleResident resident : infectedResidents) {
+			// Loop through all susceptible residents
+			for (FluVilleResident otherResident : susceptibleResidents) {
+				if (otherResident.isVisible() && otherResident.collidesWith(resident)) {
+					residentsInProximity.add(otherResident);
+				}
+			}
+		}
+		
+		// Increase the exposure for any susceptible residents that were too close to infectd resident
+		for (FluVilleResident residentWithIncreasedExposure : residentsInProximity) {
+			residentWithIncreasedExposure.cyclesAroundInfectedPerson++;
+			// Infect residents that went over their limit
+			if (residentWithIncreasedExposure.cyclesAroundInfectedPerson >= FluVilleResident.CYCLES_BEFORE_INFECTION) {
+				residentWithIncreasedExposure.infect();
+			}
+		}
+	}
+
+	private Set<FluVilleResident> getVisibleInfectedResidents() {
+		Set<FluVilleResident> infectedResidents = new HashSet<FluVilleResident>();
+		for (FluVilleResident resident : gameState.residents) {
+			if (resident.infected && resident.isVisible() && !resident.wasSentHomeSick) {
+				infectedResidents.add(resident);
+			}
+		}
+		return infectedResidents;
+	}
+	
+	private Set<FluVilleResident> getSusceptibleResidents() {
+		Set<FluVilleResident> susceptibleResidents = new HashSet<FluVilleResident>();
+		for (FluVilleResident resident : gameState.residents) {
+			if (!resident.infected && !resident.immunized && 
+					resident.hoursOfSanitizerRemaining < 1) {
+				susceptibleResidents.add(resident);
+			}
+		}
+		return susceptibleResidents;
 	}
 }

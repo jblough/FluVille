@@ -22,21 +22,28 @@ public class FluVilleResident extends AnimatedSprite {
 
 	private static final String TAG = "FluVilleResident";
 
-	private static final int HOURS_OF_PROTECTION_FROM_HAND_SANITIZER = 5;
+	private static final int HOURS_OF_PROTECTION_FROM_HAND_SANITIZER = 12;
+	private static final int MIN_DAYS_INFECTED = 5;
+	private static final int MAX_DAYS_INFECTED = 7;
+	
+	public static final int CYCLES_BEFORE_INFECTION = 10;
 	
 	private FluVilleCityActivity activity;
 	private Scene scene;
 	
 	public TMXObject home;
 	public TMXObject placeOfWork;
+	public TMXObject currentDestination;
 	
 	// state variables
 	public boolean infected;
 	public boolean immunized;
 	public int hoursOfSanitizerRemaining;
 	public int daysOfInfectionRemaining;
+	public int cyclesAroundInfectedPerson;
 	//public PathModifier pathOfTravel;
 	public boolean isWalking;
+	public boolean wasSentHomeSick;
 	public ChangeableText protectionLabel;
 	
 	private MainPathListener mainPathListener = new MainPathListener();
@@ -57,7 +64,9 @@ public class FluVilleResident extends AnimatedSprite {
 		this.immunized = false;
 		this.hoursOfSanitizerRemaining = 0;
 		this.daysOfInfectionRemaining = 0;
+		this.cyclesAroundInfectedPerson = 0;
 		this.isWalking = false;
+		this.wasSentHomeSick = false;
 		
 		this.protectionLabel = new ChangeableText(0, 0, this.activity.mMenuFont, "10");
 	}
@@ -70,47 +79,18 @@ public class FluVilleResident extends AnimatedSprite {
 	public void walk(final TMXObject destination) {
 		//Log.d(TAG, "walk to destination");
 		this.isWalking = true;
+		this.currentDestination = destination;
 		
 		final Path path = calculatePath(getX(), getY(), 
 				destination.getX() + MathUtils.random(0, destination.getWidth()), destination.getY());
 
-		PathModifier pathOfTravel = new PathModifier(getRandomSpeed(), path, null, mainPathListener);/*new IPathModifierListener() {
-			@Override
-			public void onWaypointPassed(final PathModifier pPathModifier, final IEntity pEntity, final int pWaypointIndex) {
-				float xPoints[] = pPathModifier.getPath().getCoordinatesX();
-				float yPoints[] = pPathModifier.getPath().getCoordinatesY();
-				if (pWaypointIndex >= (xPoints.length-1)) {
-					reachedDestination();
-				}
-				else {
-					float xDifference = xPoints[pWaypointIndex + 1] - xPoints[pWaypointIndex];
-					float yDifference = yPoints[pWaypointIndex + 1] - yPoints[pWaypointIndex];
-					if (Math.abs(xDifference) > Math.abs(yDifference) &&
-							(xDifference > 0)) {
-						faceRight();
-					}
-					else if (Math.abs(xDifference) > Math.abs(yDifference) &&
-							(xDifference < 0)) {
-						faceLeft();
-					}
-					else if (Math.abs(yDifference) > Math.abs(xDifference) &&
-							(yDifference < 0)) {
-						faceUpward();
-					}
-					else if (Math.abs(yDifference) > Math.abs(xDifference) &&
-							(yDifference > 0)) {
-						faceDownward();
-					}
-				}
-			}
-		});*/
-		
+		PathModifier pathOfTravel = new PathModifier(getRandomSpeed(), path, null, mainPathListener);
 		this.registerEntityModifier(pathOfTravel);
 	}
 
 	private Path calculatePath(final float fromX, final float fromY, final float toX, final float toY) {
-		boolean leftPath = fromX < FluVilleCityActivity.CAMERA_WIDTH / 2;
 		boolean goingDown = fromY < toY;
+		boolean leftPath = (goingDown) ? (fromX < FluVilleCityActivity.CAMERA_WIDTH / 2) : (toX < FluVilleCityActivity.CAMERA_WIDTH / 2);
 		boolean stopAtResidential = false;
 		boolean stopAtTop = false;
 		boolean stopAtMiddle = false;
@@ -260,7 +240,7 @@ public class FluVilleResident extends AnimatedSprite {
 	private void reachedDestination() {
 		//this.isWalking = false;
 		
-		faceUpward();
+		//faceUpward();
 		//setVisible(false);
 		scene.registerUpdateHandler(new TimerHandler(0.1f, new ITimerCallback() {
 			
@@ -272,6 +252,8 @@ public class FluVilleResident extends AnimatedSprite {
 					public void run() {
 						scene.getLastChild().detachChild(FluVilleResident.this);
 						isWalking = false;
+						if (!infected && !currentDestination.getName().equals(home.getName()) && activity.isBuildingInfected(currentDestination))
+							infect();
 					}
 				});
 			}
@@ -317,21 +299,15 @@ public class FluVilleResident extends AnimatedSprite {
 			}
 		});
 		
+		if (this.infected) {
+			this.wasSentHomeSick = true;
+		}
+		
 		Path path = new Path(2);
 		path.to(getX() - getWidth() / 2, getY() - getHeight() / 2).
 			to(home.getX() + MathUtils.random(0, home.getWidth()) - getWidth() / 2, 
 				home.getY() + MathUtils.random(0, home.getHeight()) - getHeight() / 2);
-		registerEntityModifier(new PathModifier(0.5f, path, null, homePathListener));/*new IPathModifierListener() {
-			
-			@Override
-			public void onWaypointPassed(PathModifier pPathModifier, IEntity pEntity,
-					int pWaypointIndex) {
-				float xPoints[] = pPathModifier.getPath().getCoordinatesX();
-				if (pWaypointIndex >= (xPoints.length-1)) {
-					reachedDestination();
-				}
-			}
-		}));*/
+		registerEntityModifier(new PathModifier(0.5f, path, null, homePathListener));
 	}
 	
 	public void immunize() {
@@ -357,6 +333,13 @@ public class FluVilleResident extends AnimatedSprite {
 	
 	public void recover() {
 		this.infected = false;
+		setTextureRegion(activity.mPlayerTextureRegion);
+	}
+	
+	public void infect() {
+		this.infected = true;
+		this.daysOfInfectionRemaining = MathUtils.random(MIN_DAYS_INFECTED, MAX_DAYS_INFECTED);
+		setTextureRegion(activity.mInfectedPlayerTextureRegion);
 	}
 	
 	private class MainPathListener implements IPathModifierListener {
@@ -366,6 +349,8 @@ public class FluVilleResident extends AnimatedSprite {
 			float yPoints[] = pPathModifier.getPath().getCoordinatesY();
 			if (pWaypointIndex >= (xPoints.length-1)) {
 				reachedDestination();
+				if (infected && !currentDestination.getName().equals(home.getName()))
+					activity.infectBuilding(currentDestination);
 			}
 			else {
 				float xDifference = xPoints[pWaypointIndex + 1] - xPoints[pWaypointIndex];
