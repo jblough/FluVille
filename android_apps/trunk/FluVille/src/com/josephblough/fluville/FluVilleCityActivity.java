@@ -42,6 +42,9 @@ import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.MathUtils;
 
+import com.josephblough.fluville.feeds.DataRetriever;
+import com.josephblough.fluville.feeds.tasks.XmlNewsFeedDownloaderTask;
+
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -202,7 +205,8 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 
 		this.mDialogFontTexture = new Texture(256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		//this.mMenuFont = new Font(this.mDialogFontTexture, Typeface.create(Typeface.MONOSPACE, Typeface.BOLD), 12, false, Color.WHITE);
-		this.mDialogFont = new Font(this.mDialogFontTexture, Typeface.create(Typeface.SERIF, Typeface.NORMAL), 20, true, Color.BLACK);
+		//this.mDialogFont = new Font(this.mDialogFontTexture, Typeface.create(Typeface.SERIF, Typeface.NORMAL), 20, true, Color.BLACK);
+		this.mDialogFont = new Font(this.mDialogFontTexture, Typeface.create(Typeface.SERIF, Typeface.NORMAL), 24, true, Color.BLACK);
 		
 		this.mEngine.getTextureManager().loadTextures(this.mMenuFontTexture, this.mDialogFontTexture);
 		this.mEngine.getFontManager().loadFonts(this.mMenuFont, this.mDialogFont);
@@ -290,10 +294,13 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		}));
 
 		//if (!gameState.shownWelcomeMessage) {
-			displayMessage(getString(R.string.welcome));
+			displayMessage(getString(R.string.welcome), getString(R.string.control_instructions));
 			gameState.shownWelcomeMessage = true;
 			updatePreviouslyShownMessages("shownWelcomeMessage");
 		//}
+			
+		XmlNewsFeedDownloaderTask downloader = new XmlNewsFeedDownloaderTask();
+		downloader.execute(DataRetriever.FLU_PAGES_AS_XML_URL);
 	}
 	
 	private void incrementHour() {
@@ -682,13 +689,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	}
 	
 	public void displayInfectedBuildingWarning(final TMXObject building) {
-		if (building.getY() > (CAMERA_HEIGHT * 2 / 3)) {
-			showArrow(building.getX() + (building.getWidth() / 2), (building.getY() + building.getHeight()), false);
-		}
-		else {
-			showArrow(building.getX(), building.getY(), true);
-		}
-		
+		showArrow(building.getX(), building.getY() - building.getWidth(), true);
 		displayMessage(getString(R.string.infected_building_warning), getString(R.string.sponge_instructions));
 		gameState.shownInfectedBuildingMessage = true;
 		updatePreviouslyShownMessages("shownInfectedBuildingMessage");
@@ -749,8 +750,10 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			@Override
 			public void run() {
 				Rectangle buildingRectangle = infectedBuildingMap.get(building.getName());
-				mEngine.getScene().getLastChild().detachChild(buildingRectangle);
-				RECTANGLE_POOL.recyclePoolItem(buildingRectangle);
+				if (buildingRectangle != null) {
+					mEngine.getScene().getLastChild().detachChild(buildingRectangle);
+					RECTANGLE_POOL.recyclePoolItem(buildingRectangle);
+				}
 				infectedBuildingMap.remove(building.getName());
 			}
 		});

@@ -32,14 +32,14 @@ import android.util.Log;
 public class DataRetriever {
 	private final static String TAG = "DataRetriever";
 
-	private static final String FLU_VACCINATION_ESTIMATES_URL = "http://www.cdc.gov/flue/professionals/vaccination/reporti1011/resources/2010-11_Coverage.xls";
-	private static final String WEEKLY_FLU_ACTIVITY_REPORT_URL = "http://www.cdc.gov/flu/weekly/flureport.xml";
-	private static final String FLU_PAGES_AS_XML_URL = "http://t.cdc.gov/feed.aspx?tpc=26829&days=90";
-	private static final String FLU_PAGES_AS_JSON_URL = "http://t.cdc.gov/feed.aspx?tpc=26829&days=90&fmt=json";
-	private static final String FLU_UPDATES_URL = "http://www2c.cdc.gov/podcasts/createrss.asp?t=r&c=20";
-	private static final String FLU_PODCASTS_URL = "http://www2c.cdc.gov/podcasts/searchandcreaterss.asp?topic=flue";
-	private static final String CDC_FEATURES_PAGES_AS_XML_URL = "http://t.cdc.gov/feed.aspx?tpc=26816&fromdate=1/1/2011";
-	private static final String CDC_FEATURES_PAGES_AS_JSON_URL = "http://t.cdc.gov/feed.aspx?tpc=26816&fromdate=1/1/2011&fmt=json";
+	public static final String FLU_VACCINATION_ESTIMATES_URL = "http://www.cdc.gov/flue/professionals/vaccination/reporti1011/resources/2010-11_Coverage.xls";
+	public static final String WEEKLY_FLU_ACTIVITY_REPORT_URL = "http://www.cdc.gov/flu/weekly/flureport.xml";
+	public static final String FLU_PAGES_AS_XML_URL = "http://t.cdc.gov/feed.aspx?tpc=26829&days=90";
+	public static final String FLU_PAGES_AS_JSON_URL = "http://t.cdc.gov/feed.aspx?tpc=26829&days=90&fmt=json";
+	public static final String FLU_UPDATES_URL = "http://www2c.cdc.gov/podcasts/createrss.asp?t=r&c=20";
+	public static final String FLU_PODCASTS_URL = "http://www2c.cdc.gov/podcasts/searchandcreaterss.asp?topic=flue";
+	public static final String CDC_FEATURES_PAGES_AS_XML_URL = "http://t.cdc.gov/feed.aspx?tpc=26816&fromdate=1/1/2011";
+	public static final String CDC_FEATURES_PAGES_AS_JSON_URL = "http://t.cdc.gov/feed.aspx?tpc=26816&fromdate=1/1/2011&fmt=json";
 
 
 	public void getFluVaccinationEstimates() {
@@ -113,11 +113,6 @@ public class DataRetriever {
 			URL feedUrl = new URL(url);
 			SyndFeedInput input = new SyndFeedInput();
 			SyndFeed feed = input.build(new XmlReader(feedUrl));
-			/*Log.d(TAG, "SyndFeed Array has " + feed.getEntries().size() + " elements");
-	    List<SyndEntry> entries = (List<SyndEntry>)feed.getEntries();
-	    for (SyndEntry entry : entries) {
-		Log.d(TAG, entry.getTitle());
-	    }*/
 			return feed.getEntries();
 		}
 		catch (Exception e) {
