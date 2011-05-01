@@ -43,14 +43,18 @@ import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.MathUtils;
 
 import com.josephblough.fluville.feeds.DataRetriever;
+import com.josephblough.fluville.feeds.reports.FluReport;
+import com.josephblough.fluville.feeds.tasks.FluActivityReportDownloaderTask;
 import com.josephblough.fluville.feeds.tasks.XmlNewsFeedDownloaderTask;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.util.Log;
+import android.view.View;
 
 public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTouchListener {
 	// ===========================================================
@@ -254,6 +258,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 
 	@Override
 	public void onLoadComplete() {
+		Log.d(TAG, "onLoadComplete");
 		for (int i=0; i<5; i++) {
 			addResident();
 			
@@ -261,7 +266,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 				gameState.residents.get(gameState.residents.size() - 1).infect();
 			}
 		}
-
+		
 		// Update handler to check if more residents are infected
 		this.mEngine.registerUpdateHandler(new TimerHandler(1.0f, true, new ITimerCallback() {
 			
@@ -299,8 +304,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			updatePreviouslyShownMessages("shownWelcomeMessage");
 		//}
 			
-		XmlNewsFeedDownloaderTask downloader = new XmlNewsFeedDownloaderTask();
-		downloader.execute(DataRetriever.FLU_PAGES_AS_XML_URL);
+		loadFeeds();
 	}
 	
 	private void incrementHour() {
@@ -313,7 +317,10 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			}
 
 			// Get the residents walking again
-			if (!resident.isWalking && !resident.isAtWork() && !resident.wasSentHomeSick) {
+			if (!resident.isWalking && !resident.isAtWork() && 
+					!resident.wasSentHomeSick && 
+					(!resident.infected ||				// non-infected residents code right out
+					(MathUtils.random(0, 2) == 0))) {	// infected residents don't come out all at once
 				this.mEngine.registerUpdateHandler(new TimerHandler(MathUtils.random(0.1f, 1.9f), new ITimerCallback() {
 					@Override
 					public void onTimePassed(TimerHandler pTimerHandler) {
@@ -710,15 +717,27 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			
 			@Override
 			public void run() {
+				/*
 				AlertDialog.Builder alert = new AlertDialog.Builder(FluVilleCityActivity.this);
-				alert.setMessage("News feeds from the CDC");
+				//alert.setMessage("News feeds from the CDC");
+				View feedsView = FluVilleCityActivity.this.getLayoutInflater().inflate(R.layout.feeds, null);
+				alert.setView(feedsView);
 				alert.setPositiveButton("Resume", new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int whichButton) {
 					}
 				});
 				alert.show();
+				*/
+			    Intent i = new Intent(FluVilleCityActivity.this, FeedsTabActivity.class);
+			    startActivityForResult(i, 0);
 			}
 		});
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		Log.d(TAG, "onActivityResult");
+		super.onActivityResult(requestCode, resultCode, data);
 	}
 	
 	public void infectBuilding(final TMXObject destination) {
@@ -851,5 +870,23 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			}
 		}
 		return susceptibleResidents;
+	}
+	
+	private void loadFeeds() {
+		ApplicationController app = (ApplicationController)getApplicationContext();
+		XmlNewsFeedDownloaderTask downloader = new XmlNewsFeedDownloaderTask(app, FeedActivity.FLU_PAGES);
+		downloader.execute();
+
+		downloader = new XmlNewsFeedDownloaderTask(app, FeedActivity.FLU_UPDATES);
+		downloader.execute();
+
+		downloader = new XmlNewsFeedDownloaderTask(app, FeedActivity.FLU_PODCASTS);
+		downloader.execute();
+
+		downloader = new XmlNewsFeedDownloaderTask(app, FeedActivity.CDC_FEATURE_PAGES);
+		downloader.execute();
+		
+		FluActivityReportDownloaderTask reportDownloader = new FluActivityReportDownloaderTask(app);
+		reportDownloader.execute();
 	}
 }

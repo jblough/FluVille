@@ -9,7 +9,7 @@ public class GameState {
 	public static final int DAYS_BETWEEN_HAND_SANITIZER_REFILLS = 1;
 	
 	public static final int FLU_SHOT_REFILL_SIZE = 3;
-	public static final int HAND_SANITIZER_REFILL_SIZE = 3;
+	public static final int HAND_SANITIZER_REFILL_SIZE = 5;
 	public static final int MAX_FLU_SHOT_DOSES = 10;
 	public static final int MAX_HAND_SANITIZER_DOSES = 10;
 	
