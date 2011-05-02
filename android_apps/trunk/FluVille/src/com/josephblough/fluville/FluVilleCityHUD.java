@@ -32,6 +32,11 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 	private Rectangle spongeMenuItem;
 	private ChangeableText fluShotsRemainingLabel;
 	private ChangeableText handSanitizerRemainingLabel;
+
+	private Rectangle immunizedResidentGaugeBox;
+	private Rectangle immunizedResidentGauge;
+	private ChangeableText immunizedResidentLabel;
+	
 	private Rectangle infectedResidentGaugeBox;
 	private Rectangle infectedResidentGauge;
 	private ChangeableText infectedResidentLabel;
@@ -117,15 +122,33 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 				dragResidentMenuItem.getHeight() / 2 - dragResidentMenuImage.getHeight() / 2);
 		dragResidentMenuItem.attachChild(dragResidentMenuImage);
 
-		// Gauge indicator at the bottom of the screen
+		// Immunized Gauge indicator at the bottom of the screen
+		immunizedResidentGaugeBox = new Rectangle(this.activity.getMapWidth() + 5.0f, 
+				(FluVilleCityActivity.CAMERA_HEIGHT - 100.0f/*75.0f*/), 
+				(FluVilleCityActivity.CAMERA_WIDTH - this.activity.getMapWidth()) - 10.0f, 20.0f);
+		immunizedResidentGaugeBox.setColor(0.77f, 0.77f, 0.77f);
+		this.getLastChild().attachChild(immunizedResidentGaugeBox);
+		
+		immunizedResidentGauge = new Rectangle(0, 0, 0, immunizedResidentGaugeBox.getHeight());
+		immunizedResidentGauge.setColor(0.004f, 0.522f, 0.004f);
+		immunizedResidentGaugeBox.attachChild(immunizedResidentGauge);
+		
+		immunizedResidentLabel = new ChangeableText(0, 0, activity.mMenuFont, "100/100 immunized", HorizontalAlign.CENTER, "100/100 immunized".length());
+		immunizedResidentLabel.setWidth((FluVilleCityActivity.CAMERA_WIDTH - this.activity.getMapWidth()));
+		immunizedResidentLabel.setPosition(x, immunizedResidentGaugeBox.getY() + immunizedResidentGaugeBox.getHeight() + 2.0f);
+		this.getLastChild().attachChild(immunizedResidentLabel);
+		
+		updateImmunizationRateLabels();
+		
+		// Infected Gauge indicator at the bottom of the screen
 		infectedResidentGaugeBox = new Rectangle(this.activity.getMapWidth() + 5.0f, 
-				(FluVilleCityActivity.CAMERA_HEIGHT - 75.0f), 
+				(FluVilleCityActivity.CAMERA_HEIGHT - 50.0f/*75.0f*/), 
 				(FluVilleCityActivity.CAMERA_WIDTH - this.activity.getMapWidth()) - 10.0f, 20.0f);
 		infectedResidentGaugeBox.setColor(0.77f, 0.77f, 0.77f);
 		this.getLastChild().attachChild(infectedResidentGaugeBox);
 		
 		infectedResidentGauge = new Rectangle(0, 0, 0, infectedResidentGaugeBox.getHeight());
-		infectedResidentGauge.setColor(1.0f, 0.0f, 0.0f);
+		infectedResidentGauge.setColor(0.627f, 0.024f, 0.071f);
 		infectedResidentGaugeBox.attachChild(infectedResidentGauge);
 		
 		infectedResidentLabel = new ChangeableText(0, 0, activity.mMenuFont, "", HorizontalAlign.CENTER, "100/100 infected".length());
@@ -138,6 +161,14 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 		this.setOnAreaTouchListener(this);
 	}
 
+	public void updateImmunizationRateLabels() {
+		int immunized = activity.getImmunizedResidentCount();
+		int total = activity.gameState.residents.size();
+		float percentage = (float)immunized / (float)total;
+		immunizedResidentGauge.setWidth(immunizedResidentGaugeBox.getWidth() * percentage);
+		immunizedResidentLabel.setText(immunized + "/" + total + " immunized");
+	}
+	
 	public void updateInfectionRateLabels() {
 		int infected = activity.getInfectedResidentCount();
 		int total = activity.gameState.residents.size();

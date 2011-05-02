@@ -42,8 +42,6 @@ import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.MathUtils;
 
-import com.josephblough.fluville.feeds.DataRetriever;
-import com.josephblough.fluville.feeds.reports.FluReport;
 import com.josephblough.fluville.feeds.tasks.FluActivityReportDownloaderTask;
 import com.josephblough.fluville.feeds.tasks.XmlNewsFeedDownloaderTask;
 
@@ -54,7 +52,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.util.Log;
-import android.view.View;
+import android.view.KeyEvent;
 
 public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTouchListener {
 	// ===========================================================
@@ -310,17 +308,34 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	private void incrementHour() {
 		gameState.hourOfDay++;
 
+		final TMXObject pizza = findLandmark(MAP_LANDMARK_PIZZA);
+		final boolean isLunchtime = gameState.hourOfDay <=1 && gameState.hourOfDay >= 11;
 		for (final FluVilleResident resident : gameState.residents) {
 			// Decrease any accumulations that we're keeping track of for the resident
 			if (resident.hoursOfSanitizerRemaining > 0) {
 				resident.reduceSanitizerProtection();
 			}
+			else {
+				resident.removeSanitizerProtection();
+			}
 
 			// Get the residents walking again
+			if (!resident.isWalking && !resident.wasSentHomeSick && isLunchtime && 
+					!resident.currentDestination.getName().equals(MAP_LANDMARK_PIZZA)) {
+				// Go to lunch
+				this.mEngine.registerUpdateHandler(new TimerHandler(MathUtils.random(0.1f, 1.9f), new ITimerCallback() {
+					@Override
+					public void onTimePassed(TimerHandler pTimerHandler) {
+						mEngine.getScene().getLastChild().attachChild(resident);
+						resident.walk(pizza);
+					}
+				}));
+			}
 			if (!resident.isWalking && !resident.isAtWork() && 
 					!resident.wasSentHomeSick && 
 					(!resident.infected ||				// non-infected residents code right out
-					(MathUtils.random(0, 2) == 0))) {	// infected residents don't come out all at once
+					(MathUtils.random(0, 3) == 0))) {	// infected residents don't come out all at once
+				// Go to work
 				this.mEngine.registerUpdateHandler(new TimerHandler(MathUtils.random(0.1f, 1.9f), new ITimerCallback() {
 					@Override
 					public void onTimePassed(TimerHandler pTimerHandler) {
@@ -339,7 +354,8 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 					}
 				}));
 			}
-			else if (!resident.isWalking && resident.isAtWork()) {
+			else if (!resident.isWalking && resident.isAtWork() && (MathUtils.random(0, 2) == 0)) {
+				// Go home
 				this.mEngine.registerUpdateHandler(new TimerHandler(MathUtils.random(0.1f, 1.9f), new ITimerCallback() {
 					@Override
 					public void onTimePassed(TimerHandler pTimerHandler) {
@@ -474,6 +490,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			resident.immunize();
 			gameState.immunizationsRemaining--;
 			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateFluShotsLabel();
+			((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateImmunizationRateLabels();
 			
 			if (!gameState.shownLimitedSuppliesMessage && gameState.immunizationsRemaining == 0) {
 				displayLimitedSuppliesMessage();
@@ -482,7 +499,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	}
 	
 	public void sanitizeResident(final FluVilleResident resident) {
-		if (!resident.infected && resident.hoursOfSanitizerRemaining <= 0 && 
+		if (!resident.immunized && !resident.infected && resident.hoursOfSanitizerRemaining <= 0 && 
 				gameState.handSanitizerDosesRemaining > 0) {
 			resident.applyHandSanitizer();
 			gameState.handSanitizerDosesRemaining--;
@@ -697,7 +714,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	
 	public void displayInfectedBuildingWarning(final TMXObject building) {
 		showArrow(building.getX(), building.getY() - building.getWidth(), true);
-		displayMessage(getString(R.string.infected_building_warning), getString(R.string.sponge_instructions));
+		displayMessage(getString(R.string.infected_building_warning), getString(R.string.infected_building_instructions));
 		gameState.shownInfectedBuildingMessage = true;
 		updatePreviouslyShownMessages("shownInfectedBuildingMessage");
 	}
@@ -842,6 +859,15 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		}
 	}
 
+	public int getImmunizedResidentCount() {
+		int count = 0;
+		for (FluVilleResident resident : gameState.residents) {
+			if (resident.immunized)
+				count++;
+		}
+		return count;
+	}
+
 	public int getInfectedResidentCount() {
 		int count = 0;
 		for (FluVilleResident resident : gameState.residents) {
@@ -888,5 +914,37 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		
 		FluActivityReportDownloaderTask reportDownloader = new FluActivityReportDownloaderTask(app);
 		reportDownloader.execute();
+	}
+	
+	@Override
+	public boolean onKeyDown(final int pKeyCode, final KeyEvent pEvent) {
+		if ((pKeyCode == KeyEvent.KEYCODE_BACK || pKeyCode == KeyEvent.KEYCODE_HOME)
+				&& pEvent.getAction() == KeyEvent.ACTION_DOWN) {
+			showExitConfirmationDialog();
+			return true;
+		}
+		
+		return super.onKeyDown(pKeyCode, pEvent);
+	}
+	
+	private void showExitConfirmationDialog() {
+		gameState.stateOfPlay = GameState.STATE_OF_PLAY_PAUSED;
+		mEngine.stop();
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setTitle("Exit Confirmation");
+		alert.setMessage("Are you sure you want to exit?")
+				.setPositiveButton("Yes",
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int id) {
+								finish();
+							}
+						})
+				.setNegativeButton("No", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						gameState.stateOfPlay = GameState.STATE_OF_PLAY_RUNNING;
+						mEngine.start();
+					}
+				});
+		alert.show();
 	}
 }

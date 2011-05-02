@@ -315,6 +315,7 @@ public class FluVilleResident extends AnimatedSprite {
 	public void immunize() {
 		immunized = true;
 		setTextureRegion(activity.mImmunizedPlayerTextureRegion);
+		detachChild(protectionLabel);
 	}
 	
 	public void applyHandSanitizer() {
@@ -333,6 +334,10 @@ public class FluVilleResident extends AnimatedSprite {
 		}
 	}
 	
+	public void removeSanitizerProtection() {
+		detachChild(protectionLabel);
+	}
+	
 	public void recover() {
 		this.infected = false;
 		setTextureRegion(activity.mPlayerTextureRegion);
@@ -342,6 +347,7 @@ public class FluVilleResident extends AnimatedSprite {
 		this.infected = true;
 		this.daysOfInfectionRemaining = MathUtils.random(MIN_DAYS_INFECTED, MAX_DAYS_INFECTED);
 		setTextureRegion(activity.mInfectedPlayerTextureRegion);
+		detachChild(protectionLabel);
 	}
 	
 	private class MainPathListener implements IPathModifierListener {
