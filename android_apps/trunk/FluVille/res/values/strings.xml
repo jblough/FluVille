@@ -11,9 +11,10 @@
     <string name="sponge_usage">Germs are often spread when a person\ntouches something that is contaminated\nwith germs and then touches his\nor her eyes, nose, or mouth.</string>
     <string name="sponge_instructions">Tap a contaminated building\nto clean the building and reduce the chance of\ninfections within that building.</string>
     <string name="send_residents_home_reason">If possible, stay home from work, school, and\nerrands when you are sick.\nYou will help prevent those around you\nfrom getting sick.</string>
-    <string name="send_residents_home_instructions">Tap on a resident to send them home and keep\nthem from infecting other residents on\nthe streets, in their work place, or in the school.</string>
+    <string name="send_residents_home_instructions">Tap on a resident to send them home and keep\nthem from infecting other residents on\nthe streets, in their work place, or in the school.\nInfected residents will stay home for\nthe rest of the day. Non-infected residents\nwill go back to work.</string>
     <string name="infected_person_warning">Infected Resident!\n\nPeople with flu can spread it to\nothers up to about 6 feet away.\nFlu carriers are contagious from one day\nbefore showing symptoms to 5-7 days afterward.\nInfected residents are enclosed in a red bubble to\nidentify that they are contagious.</string>
     <string name="infected_person_instructions">Make sure that residents around the infected\nresident are immunized or\nhave been given hand sanitizer.\nSend the infected resident home as\nsoon as possible.</string>
     <string name="infected_building_warning">Infected Building!\n\nWhen an infected resident reaches their destination\nthe destination building becomes infected.\nAll residents that are in the building or\nenter the building at that point\nbecome infected unless immunized or protected\nwith hand sanitizer.</string>
+    <string name="infected_building_instructions">Select the cleaning bucket and sponge control\nand tap a contaminated building to clean the\nbuilding and reduce the chance of\ninfections within that building.</string>
     <string name="limited_supplies_warning">The flu vaccine and hand sanitizer are rationed out\nand renewed on a daily basis for hand sanitizer\nand every other day for the vaccine.</string>
 </resources>
