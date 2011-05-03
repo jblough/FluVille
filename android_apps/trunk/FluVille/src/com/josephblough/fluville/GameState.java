@@ -1,7 +1,9 @@
 package com.josephblough.fluville;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 public class GameState {
 
@@ -18,9 +20,11 @@ public class GameState {
 	
 	public int day;
 	public int hourOfDay;
+	public int stateOfPlay;
 	public int immunizationsRemaining;
 	public int handSanitizerDosesRemaining;
 	public List<FluVilleResident> residents;
+	public Map<Integer, DaySummary> daySummaries;
 	
 	public boolean shownWelcomeMessage = false;
 	public boolean shownImmunizationMessage = false;
@@ -31,8 +35,6 @@ public class GameState {
 	public boolean shownInfectedBuildingMessage = false;
 	public boolean shownLimitedSuppliesMessage = false;
 	
-	public int stateOfPlay;
-	
 	public GameState() {
 		day = 1;
 		hourOfDay = 0;
@@ -40,5 +42,10 @@ public class GameState {
 		handSanitizerDosesRemaining = 5;
 		stateOfPlay = STATE_OF_PLAY_RUNNING;
 		residents = new ArrayList<FluVilleResident>();
+		daySummaries = new HashMap<Integer, DaySummary>();
+	}
+	
+	public DaySummary getDaySummary() {
+		return (daySummaries.containsKey(day)) ? daySummaries.get(day) : new DaySummary();
 	}
 }

@@ -191,7 +191,7 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 			}
 		}
 		else if (pTouchArea.equals(sanitizerMenuItem)) {
-			Log.d(TAG, "sanitizer");
+			//Log.d(TAG, "sanitizer");
 			if (currentMenuSelection != HUD_MENU_SANITIZER) {
 				currentMenuSelection = HUD_MENU_SANITIZER;
 				// Display a popup explaining the benefits of hand sanitizer when soap and water is not available
@@ -201,7 +201,7 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 			}
 		}
 		else if (pTouchArea.equals(spongeMenuItem)) {
-			Log.d(TAG, "sponge");
+			//Log.d(TAG, "sponge");
 			if (currentMenuSelection != HUD_MENU_SPONGE) {
 				currentMenuSelection = HUD_MENU_SPONGE;
 				// Display a popup explaining the benefits of face masks to prevent infection
@@ -211,7 +211,7 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 			}
 		}
 		else if (pTouchArea.equals(dragResidentMenuItem)) {
-			Log.d(TAG, "drag residents");
+			//Log.d(TAG, "drag residents");
 			if (currentMenuSelection != HUD_MENU_GRAB_RESIDENTS) {
 				currentMenuSelection = HUD_MENU_GRAB_RESIDENTS;
 				// Display a popup explaining the need to stay inside when sick
@@ -221,7 +221,7 @@ public class FluVilleCityHUD extends HUD implements IOnAreaTouchListener {
 			}
 		}
 		else {
-			Log.d(TAG, "Something else");
+			//Log.d(TAG, "Something else");
 			currentMenuSelection = HUD_MENU_NONE;
 		}
 		updateMenuHilight();
