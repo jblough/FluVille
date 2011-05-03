@@ -23,8 +23,8 @@
   <object name="Office3" x="35" y="417" width="22" height="19"/>
   <object name="Office4" x="291" y="422" width="22" height="22"/>
   <object name="StoreBuilding1" x="162" y="163" width="59" height="28"/>
-  <object name="Flyers1" x="34" y="109" width="34" height="17"/>
-  <object name="Flyers2" x="449" y="110" width="32" height="15"/>
+  <object name="Flyers1" x="24" y="98" width="51" height="28"/>
+  <object name="Flyers2" x="434" y="96" width="53" height="30"/>
   <object name="StoreBuilding2" x="546" y="258" width="59" height="25"/>
   <object name="Pizza" x="155" y="421" width="19" height="15"/>
   <object name="TopLeftResidentialCorner" x="99" y="36" width="23" height="22"/>
