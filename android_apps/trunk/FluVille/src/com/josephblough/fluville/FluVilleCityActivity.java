@@ -2,7 +2,6 @@ package com.josephblough.fluville;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -43,19 +42,22 @@ import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.MathUtils;
 
-import com.google.code.rome.android.repackaged.com.sun.syndication.feed.synd.SyndEntry;
 import com.josephblough.fluville.feeds.tasks.FluActivityReportDownloaderTask;
 import com.josephblough.fluville.feeds.tasks.XmlNewsFeedDownloaderTask;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.DialogInterface.OnDismissListener;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTouchListener {
@@ -77,6 +79,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	//public static final int CAMERA_HEIGHT = 320;
 	
 	public static final float SECONDS_PER_FLUVILLE_HOUR = 2.0f;
+	private static final int DAYS_BETWEEN_WEEKLY_NEWS = 7;
 	
 	public static final String MAP_LANDMARK_LEFT_RESIDENTIAL_INTERSECTION = "TopLeftResidentialCorner";
 	public static final String MAP_LANDMARK_RIGHT_RESIDENTIAL_INTERSECTION = "TopRightResidentialCorner";
@@ -151,6 +154,8 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	private Map<String, Rectangle> infectedBuildingMap = new ConcurrentHashMap<String, Rectangle>();
 	
 	public static RectanglePool RECTANGLE_POOL = new RectanglePool();
+	
+	private Integer lastWeeklyNewsFeed = null;
 	
 	// ===========================================================
 	// Constructors
@@ -314,9 +319,6 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	}
 	
 	private void incrementHour() {
-		/*if (gameState.hourOfDay % 2 == 0) {
-			displayWeeklyNews();
-		}*/
 		gameState.hourOfDay++;
 
 		final TMXObject pizza = findLandmark(MAP_LANDMARK_PIZZA);
@@ -424,6 +426,12 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 
 		((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateImmunizationRateLabels();
 		((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateInfectionRateLabels();
+
+
+		// On the first day of each week, display CDC news feeds
+		if (gameState.day % DAYS_BETWEEN_WEEKLY_NEWS == 0) {
+			displayWeeklyNews();
+		}
 	}
 
 	@Override
@@ -671,6 +679,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 				public void run() {
 					AlertDialog.Builder alert = new AlertDialog.Builder(FluVilleCityActivity.this);
 					alert.setTitle("Skip messages");
+					alert.setCancelable(false);
 					alert.setMessage("Would you like to skip any information messages that you've already seen?")
 							.setPositiveButton("Yes",
 									new DialogInterface.OnClickListener() {
@@ -772,27 +781,27 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	}
 	
 	public void displayNews() {
-		//TMXObject flyer = findLandmark(MAP_LANDMARK_FLYER_1);
-		//if (flyer != null)
-			//showArrow((float)(flyer.getX() + (flyer.getWidth() / 2)), (float)(flyer.getY() + flyer.getHeight()), false);
-
+		gameState.stateOfPlay = GameState.STATE_OF_PLAY_PAUSED;
+		mEngine.stop();
 		runOnUiThread(new Runnable() {
 			
 			@Override
 			public void run() {
-				/*
-				AlertDialog.Builder alert = new AlertDialog.Builder(FluVilleCityActivity.this);
-				//alert.setMessage("News feeds from the CDC");
-				View feedsView = FluVilleCityActivity.this.getLayoutInflater().inflate(R.layout.feeds, null);
-				alert.setView(feedsView);
-				alert.setPositiveButton("Resume", new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int whichButton) {
+				final ProgressDialog dialog = ProgressDialog.show(FluVilleCityActivity.this, "", "Loading Feeds...");
+				new Thread() {
+
+					public void run() {
+						try {
+							sleep(1000);
+						}
+						catch (Exception e) {
+							
+						}
+						dialog.dismiss();
+					    Intent i = new Intent(FluVilleCityActivity.this, FeedsTabActivity.class);
+					    startActivityForResult(i, 0);
 					}
-				});
-				alert.show();
-				*/
-			    Intent i = new Intent(FluVilleCityActivity.this, FeedsTabActivity.class);
-			    startActivityForResult(i, 0);
+				}.start();
 			}
 		});
 	}
@@ -801,6 +810,11 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		Log.d(TAG, "onActivityResult");
 		super.onActivityResult(requestCode, resultCode, data);
+		
+		gameState.stateOfPlay = GameState.STATE_OF_PLAY_RUNNING;
+		if (!mEngine.isRunning()) {
+			mEngine.start();
+		}
 	}
 	
 	public void infectBuilding(final TMXObject destination) {
@@ -981,6 +995,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			@Override
 			public void run() {
 				AlertDialog.Builder alert = new AlertDialog.Builder(FluVilleCityActivity.this);
+				alert.setCancelable(false);
 				alert.setTitle("Exit Confirmation");
 				alert.setMessage("Are you sure you want to exit?")
 						.setPositiveButton("Yes",
@@ -1017,60 +1032,58 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	}
 
 	public void displayWeeklyNews() {
-		// Use alert building with a custom view to simulate a newspaper
-		final List<SyndEntry> feed = getNextFeed();
+		final Integer feed = getNextFeed();
 		if (feed != null) {
 			gameState.stateOfPlay = GameState.STATE_OF_PLAY_PAUSED;
 			mEngine.stop();
+			
 			runOnUiThread(new Runnable() {
 				
 				@Override
 				public void run() {
-					//showDialog(R.layout.weekly_news);
-					/*
-					AlertDialog.Builder alert = new AlertDialog.Builder(FluVilleCityActivity.this);
-					alert.setPositiveButton("Close",
-							new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int id) {
-							gameState.stateOfPlay = GameState.STATE_OF_PLAY_RUNNING;
-							mEngine.start();
+					final ProgressDialog dialog = ProgressDialog.show(FluVilleCityActivity.this, "", "Loading Weeky News...");
+					new Thread() {
+
+						public void run() {
+							try {
+								sleep(1000);
+							}
+							catch (Exception e) {
+								
+							}
+							dialog.dismiss();
+							Intent intent = new Intent(FluVilleCityActivity.this, FeedActivity.class);
+							intent.putExtra(FeedActivity.FEED_EXTRA, feed);
+						    startActivityForResult(intent, 0);
 						}
-					});
-					// TODO - write a custom XML layout for the weekly news
-					View weeklyNewsView = FluVilleCityActivity.this.getLayoutInflater().inflate(R.layout.weekly_news, null);
-					ListView listView = (ListView)weeklyNewsView.findViewById(R.id.news_articles_listview);
-					ArrayAdapter<String> adapter = new ArrayAdapter<String>(FluVilleCityActivity.this, android.R.layout.simple_list_item_1);
-					for (SyndEntry entry : feed) {
-						adapter.add(entry.getTitle());
-					}
-				    //listView.setAdapter(adapter);
-				    //adapter.notifyDataSetChanged();
-					//alert.setView(weeklyNewsView);
-					alert.setAdapter(adapter, new OnClickListener() {
-						
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							// TODO Auto-generated method stub
-							
-						}
-					});
-					alert.show();
-					*/
+					}.start();
 				}
 			});
 		}
 	}
 	
-	private List<SyndEntry> getNextFeed() {
+	private Integer getNextFeed() {
 		ApplicationController app = (ApplicationController)getApplicationContext();
-		if (app.fluPagesFeed != null)
-			return app.fluPagesFeed;
-		if (app.fluUpdatesFeed != null)
-			return app.fluUpdatesFeed;
-		if (app.fluPodcastsFeed != null)
-			return app.fluPodcastsFeed;
-		if (app.cdcFeaturePagesFeed != null)
-			return app.cdcFeaturePagesFeed;
+		if (app.fluPagesFeed != null && 
+				(lastWeeklyNewsFeed == null || lastWeeklyNewsFeed.intValue() == FeedActivity.CDC_FEATURE_PAGES)) {
+			lastWeeklyNewsFeed = FeedActivity.FLU_PAGES;
+			return lastWeeklyNewsFeed;
+		}
+		if (app.fluUpdatesFeed != null && lastWeeklyNewsFeed != null && 
+				lastWeeklyNewsFeed.intValue() == FeedActivity.FLU_PAGES) {
+			lastWeeklyNewsFeed = FeedActivity.FLU_UPDATES;
+			return lastWeeklyNewsFeed;
+		}
+		if (app.fluPodcastsFeed != null && lastWeeklyNewsFeed != null && 
+				lastWeeklyNewsFeed.intValue() == FeedActivity.FLU_UPDATES) {
+			lastWeeklyNewsFeed = FeedActivity.FLU_PODCASTS;
+			return lastWeeklyNewsFeed;
+		}
+		if (app.cdcFeaturePagesFeed != null && lastWeeklyNewsFeed != null && 
+				lastWeeklyNewsFeed.intValue() == FeedActivity.FLU_PODCASTS) {
+			lastWeeklyNewsFeed = FeedActivity.CDC_FEATURE_PAGES;
+			return lastWeeklyNewsFeed;
+		}
 		
 		return null;
 	}
@@ -1092,5 +1105,38 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		flyer = findLandmark(MAP_LANDMARK_FLYER_2);
 		if (flyer != null)
 			showArrow((float)(flyer.getX() + (flyer.getWidth() / 2)), (float)(flyer.getY() + flyer.getHeight()), false);
+	}
+	
+	private void presentInfectionRateStatistics() {
+		gameState.stateOfPlay = GameState.STATE_OF_PLAY_PAUSED;
+		mEngine.stop();
+		runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				AlertDialog.Builder alert = new AlertDialog.Builder(FluVilleCityActivity.this);
+				alert.setTitle("Infection statistics");
+				alert.setPositiveButton("Close",
+						new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						gameState.stateOfPlay = GameState.STATE_OF_PLAY_RUNNING;
+						mEngine.start();
+					}
+				});
+				View statisticsView = FluVilleCityActivity.this.getLayoutInflater().inflate(R.layout.infection_stats, null);
+				ImageView image = (ImageView)(statisticsView.findViewById(R.id.statistics_graph));
+				image.setImageBitmap(gameState.graphInfectionRate());
+				alert.setView(statisticsView);
+				final AlertDialog alertDialog = alert.show();
+				alertDialog.setOnDismissListener(new OnDismissListener() {
+					
+					@Override
+					public void onDismiss(DialogInterface dialog) {
+						gameState.stateOfPlay = GameState.STATE_OF_PLAY_RUNNING;
+						mEngine.start();
+					}
+				});
+			}
+		});
 	}
 }

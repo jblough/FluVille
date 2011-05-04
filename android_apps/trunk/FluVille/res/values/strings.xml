@@ -2,6 +2,8 @@
 <resources>
     <string name="hello">Hello World, FluVilleCityActivity!</string>
     <string name="app_name">FluVille</string>
+    <string name="weekly_news_title">FluVille Weekly News</string>
+    <string name="cdc_feeds_title">CDC Information Feeds</string>
     <string name="welcome">Welcome to FluVille!\nAs the mayor of FluVille, your job\nis to keep your residents healthly\nand reduce the spread of the flu\nthroughout the population.</string>
     <string name="control_instructions">Use the controls on the right side of\nthe screen to keep the spread of the\nflu contained.</string>
     <string name="immunization_benefits">CDC recommends a yearly flu vaccine as the first\nand most important step in protecting\nagainst flu viruses.</string>

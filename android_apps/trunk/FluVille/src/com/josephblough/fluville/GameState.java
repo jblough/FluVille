@@ -5,6 +5,12 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+
 public class GameState {
 
 	public static final int DAYS_BETWEEN_FLU_SHOT_REFILLS = 2;
@@ -47,5 +53,37 @@ public class GameState {
 	
 	public DaySummary getDaySummary() {
 		return (daySummaries.containsKey(day)) ? daySummaries.get(day) : new DaySummary();
+	}
+
+	public Bitmap graphInfectionRate() {
+		final int width = 700;
+		final int height = 500;
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+
+		// Perform the drawing operations via the canvas object
+		Canvas canvas = new Canvas(bitmap);
+
+		// Draw the background
+		Paint backgroundPaint = new Paint();
+		backgroundPaint.setColor(Color.WHITE);
+		canvas.drawRect(0, 0, bitmap.getWidth(), bitmap.getHeight(), backgroundPaint);
+
+		int lineSpacing = width / 5;
+		Paint linePaint = new Paint();
+		linePaint.setColor(Color.BLACK);
+		int x = 0;
+		while (x <= width) {
+			canvas.drawRect(new Rect(x, 0, x+5, bitmap.getHeight()), linePaint);
+			x += lineSpacing;
+		}
+
+		lineSpacing = width / 5;
+		int y = 0;
+		while (y <= height) {
+			canvas.drawRect(new Rect(0, y, bitmap.getWidth(), y+5), linePaint);
+			y += lineSpacing;
+		}
+		
+		return bitmap;	// return the underlying bitmap
 	}
 }

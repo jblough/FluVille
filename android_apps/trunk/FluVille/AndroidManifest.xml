@@ -15,10 +15,13 @@
         </activity>
 
         <activity android:name=".FeedsTabActivity"
-                  android:label="@string/app_name" />
+                  android:label="@string/cdc_feeds_title"
+                  android:theme="@android:style/Theme.Dialog" />
 
         <activity android:name=".FeedActivity"
-                  android:label="@string/app_name" />
+                  android:label="@string/weekly_news_title"
+                  android:theme="@android:style/Theme.Dialog" />
+
     </application>
 
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
