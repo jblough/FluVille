@@ -394,7 +394,13 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			}
 			
 			// Reset sanitizer at the beginning of each day
-			resident.hoursOfSanitizerRemaining = 0;
+			//resident.hoursOfSanitizerRemaining = 0;
+			if (resident.hoursOfSanitizerRemaining > 0) {
+				resident.reduceSanitizerProtection();
+			}
+			else {
+				resident.removeSanitizerProtection();
+			}
 			
 			// Reset sent home sick flag
 			resident.wasSentHomeSick = false;
