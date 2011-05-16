@@ -22,7 +22,7 @@ public class FluVilleResident extends AnimatedSprite {
 
 	private static final String TAG = "FluVilleResident";
 
-	private static final int HOURS_OF_PROTECTION_FROM_HAND_SANITIZER = 12;
+	private static final int HOURS_OF_PROTECTION_FROM_HAND_SANITIZER = 24;
 	private static final int MIN_DAYS_INFECTED = 5;
 	private static final int MAX_DAYS_INFECTED = 7;
 	
