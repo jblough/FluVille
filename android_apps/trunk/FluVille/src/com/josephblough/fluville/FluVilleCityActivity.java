@@ -1051,9 +1051,15 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 								
 							}
 							dialog.dismiss();
-							Intent intent = new Intent(FluVilleCityActivity.this, FeedActivity.class);
-							intent.putExtra(FeedActivity.FEED_EXTRA, feed);
-						    startActivityForResult(intent, 0);
+							if (FeedActivity.FLU_PODCASTS == feed) {
+								Intent intent = new Intent(FluVilleCityActivity.this, FluPodcasts.class);
+								startActivityForResult(intent, 0);
+							}
+							else {
+								Intent intent = new Intent(FluVilleCityActivity.this, FeedActivity.class);
+								intent.putExtra(FeedActivity.FEED_EXTRA, feed);
+								startActivityForResult(intent, 0);
+							}
 						}
 					}.start();
 				}
