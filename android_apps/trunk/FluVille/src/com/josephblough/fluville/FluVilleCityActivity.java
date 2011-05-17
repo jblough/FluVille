@@ -42,8 +42,10 @@ import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.MathUtils;
 
-import com.josephblough.fluville.feeds.tasks.FluActivityReportDownloaderTask;
-import com.josephblough.fluville.feeds.tasks.XmlNewsFeedDownloaderTask;
+import com.josephblough.fluville.data.SyndicatedFeed;
+import com.josephblough.fluville.tasks.FluPodcastsFeedDownloaderTask;
+import com.josephblough.fluville.tasks.FluUpdatesFeedDownloaderTask;
+import com.josephblough.fluville.tasks.SyndicatedFeedDownloaderTask;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -156,6 +158,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	public static RectanglePool RECTANGLE_POOL = new RectanglePool();
 	
 	private Integer lastWeeklyNewsFeed = null;
+	private boolean cdcFeedsReadyNotificationSent = false;
 	
 	// ===========================================================
 	// Constructors
@@ -966,20 +969,10 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	
 	private void loadFeeds() {
 		ApplicationController app = (ApplicationController)getApplicationContext();
-		XmlNewsFeedDownloaderTask downloader = new XmlNewsFeedDownloaderTask(this, app, FeedActivity.FLU_PAGES);
-		downloader.execute();
-
-		downloader = new XmlNewsFeedDownloaderTask(this, app, FeedActivity.FLU_UPDATES);
-		downloader.execute();
-
-		downloader = new XmlNewsFeedDownloaderTask(this, app, FeedActivity.FLU_PODCASTS);
-		downloader.execute();
-
-		downloader = new XmlNewsFeedDownloaderTask(this, app, FeedActivity.CDC_FEATURE_PAGES);
-		downloader.execute();
-		
-		FluActivityReportDownloaderTask reportDownloader = new FluActivityReportDownloaderTask(app);
-		reportDownloader.execute();
+		new FluUpdatesFeedDownloaderTask(app, this).execute();
+		new FluPodcastsFeedDownloaderTask(app, this).execute();
+		new SyndicatedFeedDownloaderTask(app, this, SyndicatedFeed.FLU_PAGES_TOPIC_ID).execute();
+		new SyndicatedFeedDownloaderTask(app, this, SyndicatedFeed.CDC_PAGES_TOPIC_ID).execute();
 	}
 	
 	@Override
@@ -1070,7 +1063,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	
 	private Integer getNextFeed() {
 		ApplicationController app = (ApplicationController)getApplicationContext();
-		if (app.fluPagesFeed != null && 
+		if (app.syndicatedFeeds.get(SyndicatedFeed.FLU_PAGES_TOPIC_ID) != null && 
 				(lastWeeklyNewsFeed == null || lastWeeklyNewsFeed.intValue() == FeedActivity.CDC_FEATURE_PAGES)) {
 			lastWeeklyNewsFeed = FeedActivity.FLU_PAGES;
 			return lastWeeklyNewsFeed;
@@ -1085,7 +1078,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			lastWeeklyNewsFeed = FeedActivity.FLU_PODCASTS;
 			return lastWeeklyNewsFeed;
 		}
-		if (app.cdcFeaturePagesFeed != null && lastWeeklyNewsFeed != null && 
+		if (app.syndicatedFeeds.get(SyndicatedFeed.FLU_PAGES_TOPIC_ID) != null && lastWeeklyNewsFeed != null && 
 				lastWeeklyNewsFeed.intValue() == FeedActivity.FLU_PODCASTS) {
 			lastWeeklyNewsFeed = FeedActivity.CDC_FEATURE_PAGES;
 			return lastWeeklyNewsFeed;
@@ -1094,23 +1087,32 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		return null;
 	}
 	
-	public void notifyFeedsReady() {
-		runOnUiThread(new Runnable() {
+	public synchronized void notifyFeedsReady() {
+		ApplicationController app = (ApplicationController)getApplicationContext();
+		if (app.fluPodcastsFeed != null && app.fluUpdatesFeed != null &&
+				app.syndicatedFeeds.get(SyndicatedFeed.CDC_PAGES_TOPIC_ID) != null &&
+				app.syndicatedFeeds.get(SyndicatedFeed.FLU_PAGES_TOPIC_ID) != null && 
+				!cdcFeedsReadyNotificationSent) {
 			
-			@Override
-			public void run() {
-				Toast toast = Toast.makeText(FluVilleCityActivity.this, "CDC News feeds are now available. Tap on one of the flyers above for more information.", Toast.LENGTH_SHORT);
-				toast.setGravity(Gravity.BOTTOM, 0, 0);
-				toast.show();
-			}
-		});
+			cdcFeedsReadyNotificationSent = true;
+			
+			runOnUiThread(new Runnable() {
 
-		TMXObject flyer = findLandmark(MAP_LANDMARK_FLYER_1);
-		if (flyer != null)
-			showArrow((float)(flyer.getX() + (flyer.getWidth() / 2)), (float)(flyer.getY() + flyer.getHeight()), false);
-		flyer = findLandmark(MAP_LANDMARK_FLYER_2);
-		if (flyer != null)
-			showArrow((float)(flyer.getX() + (flyer.getWidth() / 2)), (float)(flyer.getY() + flyer.getHeight()), false);
+				@Override
+				public void run() {
+					Toast toast = Toast.makeText(FluVilleCityActivity.this, "CDC News feeds are now available. Tap on one of the flyers above for more information.", Toast.LENGTH_SHORT);
+					toast.setGravity(Gravity.BOTTOM, 0, 0);
+					toast.show();
+				}
+			});
+
+			TMXObject flyer = findLandmark(MAP_LANDMARK_FLYER_1);
+			if (flyer != null)
+				showArrow((float)(flyer.getX() + (flyer.getWidth() / 2)), (float)(flyer.getY() + flyer.getHeight()), false);
+			flyer = findLandmark(MAP_LANDMARK_FLYER_2);
+			if (flyer != null)
+				showArrow((float)(flyer.getX() + (flyer.getWidth() / 2)), (float)(flyer.getY() + flyer.getHeight()), false);
+		}
 	}
 	
 	private void presentInfectionRateStatistics() {

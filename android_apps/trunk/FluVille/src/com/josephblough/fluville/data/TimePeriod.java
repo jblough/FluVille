@@ -1,4 +1,4 @@
-package com.josephblough.fluville.feeds.reports;
+package com.josephblough.fluville.data;
 
 import java.util.ArrayList;
 import java.util.List;

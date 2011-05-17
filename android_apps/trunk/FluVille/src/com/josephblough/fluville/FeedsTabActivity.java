@@ -33,8 +33,9 @@ public class FeedsTabActivity extends TabActivity {
 		spec = tabHost.newTabSpec("updates").setIndicator("Updates").setContent(intent);
 		tabHost.addTab(spec);
 
-		intent = new Intent().setClass(this, FeedActivity.class);
-		intent.putExtra(FeedActivity.FEED_EXTRA, FeedActivity.FLU_PODCASTS);
+		//intent = new Intent().setClass(this, FeedActivity.class);
+		//intent.putExtra(FeedActivity.FEED_EXTRA, FeedActivity.FLU_PODCASTS);
+		intent = new Intent().setClass(this, FluPodcasts.class);
 		//spec = tabHost.newTabSpec("download").setIndicator("Download", res.getDrawable(R.drawable.inbox)).setContent(intent);
 		spec = tabHost.newTabSpec("podcasts").setIndicator("Podcasts").setContent(intent);
 		tabHost.addTab(spec);

@@ -1,4 +1,4 @@
-package com.josephblough.fluville.feeds;
+package com.josephblough.fluville.handlers;
 
 import java.util.Stack;
 
@@ -6,9 +6,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.josephblough.fluville.feeds.reports.FluReport;
-import com.josephblough.fluville.feeds.reports.State;
-import com.josephblough.fluville.feeds.reports.TimePeriod;
+import com.josephblough.fluville.data.FluReport;
+import com.josephblough.fluville.data.State;
+import com.josephblough.fluville.data.TimePeriod;
 
 
 import android.util.Log;

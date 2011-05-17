@@ -22,6 +22,10 @@
                   android:label="@string/weekly_news_title"
                   android:theme="@android:style/Theme.Dialog" />
 
+        <activity android:name=".FluPodcasts"
+                  android:label="@string/weekly_news_title"
+                  android:theme="@android:style/Theme.Dialog" />
+
     </application>
 
     <uses-permission android:name="android.permission.WAKE_LOCK"/>

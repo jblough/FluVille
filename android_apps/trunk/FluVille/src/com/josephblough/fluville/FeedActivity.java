@@ -1,24 +1,19 @@
 package com.josephblough.fluville;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-
-import com.google.code.rome.android.repackaged.com.sun.syndication.feed.synd.SyndEntry;
+import com.josephblough.fluville.adapters.RssFeedEntryAdapter;
+import com.josephblough.fluville.data.FeedEntry;
+import com.josephblough.fluville.data.SyndicatedFeed;
 
 import android.app.ListActivity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ListAdapter;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
 
 public class FeedActivity extends ListActivity implements OnItemSelectedListener, OnItemClickListener {
 
@@ -45,28 +40,23 @@ public class FeedActivity extends ListActivity implements OnItemSelectedListener
 		getListView().setOnItemClickListener(this);
 	}
 	
-	private void loadFeed() {
+	protected void loadFeed() {
 		ApplicationController app = (ApplicationController)getApplicationContext();
-		RssFeedEntryAdapter adapter = null;
+		ListAdapter adapter = null;
 		switch (feed) {
 		case FLU_PAGES:
-			if (app != null && app.fluPagesFeed != null) {
-				adapter = new RssFeedEntryAdapter(app.fluPagesFeed);
+			if (app != null && app.syndicatedFeeds.get(SyndicatedFeed.FLU_PAGES_TOPIC_ID) != null) {
+				adapter = new RssFeedEntryAdapter(this, app.syndicatedFeeds.get(SyndicatedFeed.FLU_PAGES_TOPIC_ID).items);
 			}
 			break;
 		case FLU_UPDATES:
 			if (app != null && app.fluUpdatesFeed != null) {
-				adapter = new RssFeedEntryAdapter(app.fluUpdatesFeed);
-			}
-			break;
-		case FLU_PODCASTS:
-			if (app != null && app.fluPodcastsFeed != null) {
-				adapter = new RssFeedEntryAdapter(app.fluPodcastsFeed);
+				adapter = new RssFeedEntryAdapter(this, app.fluUpdatesFeed.items);
 			}
 			break;
 		case CDC_FEATURE_PAGES:
-			if (app != null && app.cdcFeaturePagesFeed != null) {
-				adapter = new RssFeedEntryAdapter(app.cdcFeaturePagesFeed);
+			if (app != null && app.syndicatedFeeds.get(SyndicatedFeed.CDC_PAGES_TOPIC_ID) != null) {
+				adapter = new RssFeedEntryAdapter(this, app.syndicatedFeeds.get(SyndicatedFeed.CDC_PAGES_TOPIC_ID).items);
 			}
 			break;
 		};
@@ -77,7 +67,8 @@ public class FeedActivity extends ListActivity implements OnItemSelectedListener
 
 	@Override
 	public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-		SyndEntry entry = ((RssFeedEntryAdapter)getListAdapter()).getItem(position);
+		//SyndEntry entry = ((RssFeedEntryAdapter)getListAdapter()).getItem(position);
+		FeedEntry entry = ((RssFeedEntryAdapter)getListAdapter()).getItem(position);
 		visitLink(entry);
 	}
 
@@ -88,38 +79,13 @@ public class FeedActivity extends ListActivity implements OnItemSelectedListener
 
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-		SyndEntry entry = ((RssFeedEntryAdapter)getListAdapter()).getItem(position);
+		FeedEntry entry = ((RssFeedEntryAdapter)getListAdapter()).getItem(position);
 		visitLink(entry);
 	}
 	
-	private void visitLink(final SyndEntry entry) {
-		Log.d(TAG, "Selected: " + entry.getLink());
-		final Intent intent = new Intent(Intent.ACTION_VIEW).setData(Uri.parse(entry.getLink()));
+	protected void visitLink(final FeedEntry entry) {
+		Log.d(TAG, "Selected: " + entry.link);
+		final Intent intent = new Intent(Intent.ACTION_VIEW).setData(Uri.parse(entry.link));
 		startActivity(intent);
-	}
-	
-	
-	
-	private class RssFeedEntryAdapter extends ArrayAdapter<SyndEntry> {
-		SimpleDateFormat formatter = new SimpleDateFormat();
-		RssFeedEntryAdapter(List<SyndEntry> entries) {
-			super(FeedActivity.this, android.R.layout.simple_list_item_2, entries);
-		}
-		
-		public View getView(int position, View convertView, ViewGroup parent) {
-			View row = convertView;
-			
-			if (row == null) {
-				LayoutInflater inflater = getLayoutInflater();
-				row = inflater.inflate(android.R.layout.simple_list_item_2, null);
-			}
-			SyndEntry entry = super.getItem(position);
-			((TextView)row.findViewById(android.R.id.text1)).setText(entry.getTitle());
-			Date date = (entry.getUpdatedDate() == null) ? entry.getPublishedDate() : entry.getUpdatedDate();
-			synchronized (this) {
-				((TextView) row.findViewById(android.R.id.text2)).setText(formatter.format(date));
-			}
-			return row;
-		}
 	}
 }
