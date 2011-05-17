@@ -238,7 +238,6 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 				}
 			});
 			this.mTMXTiledMap = tmxLoader.loadFromAsset(this, "tmx/smaller_tiled.tmx");
-			//this.mTMXTiledMap = tmxLoader.loadFromAsset(this, "tmx/even_smaller_tiled.tmx");
 		} catch (final TMXLoadException tmxle) {
 			Log.e(TAG, tmxle.getMessage(), tmxle);
 		}
@@ -249,7 +248,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 
 		for (TMXObjectGroup group : this.mTMXTiledMap.getTMXObjectGroups()) {
 			for (TMXObject object : group.getTMXObjects()) {
-				Log.d(TAG, "Object: " + object.getName() + " at (" + object.getX() + ", " + object.getY() + ")");
+				//Log.d(TAG, "Object: " + object.getName() + " at (" + object.getX() + ", " + object.getY() + ")");
 				mapObjects.put(object.getName(), object);
 			}
 		}
@@ -689,7 +688,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 					AlertDialog.Builder alert = new AlertDialog.Builder(FluVilleCityActivity.this);
 					alert.setTitle("Skip messages");
 					alert.setCancelable(false);
-					alert.setMessage("Would you like to skip any information messages that you've already seen?")
+					alert.setMessage(getString(R.string.skip_messages_already_viewed))
 							.setPositiveButton("Yes",
 									new DialogInterface.OnClickListener() {
 										public void onClick(DialogInterface dialog, int id) {
@@ -982,6 +981,10 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 			showExitConfirmationDialog();
 			return true;
 		}
+		else if(pKeyCode == KeyEvent.KEYCODE_MENU && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
+			displayNews();
+			return true;
+		}
 		
 		return super.onKeyDown(pKeyCode, pEvent);
 	}
@@ -1106,7 +1109,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 
 				@Override
 				public void run() {
-					Toast toast = Toast.makeText(FluVilleCityActivity.this, "CDC News feeds are now available. Tap on one of the flyers above for more information.", Toast.LENGTH_SHORT);
+					Toast toast = Toast.makeText(FluVilleCityActivity.this, getString(R.string.feeds_ready_notification), Toast.LENGTH_LONG);
 					toast.setGravity(Gravity.BOTTOM, 0, 0);
 					toast.show();
 				}

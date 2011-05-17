@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, FluVilleCityActivity!</string>
     <string name="app_name">FluVille</string>
     <string name="weekly_news_title">FluVille Weekly News</string>
     <string name="cdc_feeds_title">CDC Information Feeds</string>
@@ -19,4 +18,6 @@
     <string name="infected_building_warning">Infected Building!\n\nWhen an infected resident reaches their destination\nthe destination building becomes infected.\nAll residents that are in the building or\nenter the building at that point\nbecome infected unless immunized or protected\nwith hand sanitizer.</string>
     <string name="infected_building_instructions">Select the cleaning bucket and sponge control\nand tap a contaminated building to clean the\nbuilding and reduce the chance of\ninfections within that building.</string>
     <string name="limited_supplies_warning">The flu vaccine and hand sanitizer are rationed out\nand renewed on a daily basis for hand sanitizer\nand every other day for the vaccine.</string>
+    <string name="feeds_ready_notification">CDC News feeds are now available. Tap on one of the flyers above or use the menu button to browse the feeds.</string>
+    <string name="skip_messages_already_viewed">Would you like to skip any information messages that you\'ve already seen?</string>
 </resources>
