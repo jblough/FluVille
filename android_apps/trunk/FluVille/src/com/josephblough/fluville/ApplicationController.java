@@ -25,6 +25,7 @@ public class ApplicationController extends Application implements OnCompletionLi
 	public Integer currentlyPlayingPodcast = null;
 	public FluPodcasts activityToUpdateOnPlayCompletion;
 	private MediaPlayer player = null;
+	private boolean playerIsPrepared = false;
 
 	public void onCreate() {
 		super.onCreate();
@@ -35,7 +36,6 @@ public class ApplicationController extends Application implements OnCompletionLi
 		player.setOnCompletionListener(this);
 		player.setOnPreparedListener(this);
 		player.setOnBufferingUpdateListener(this);
-		//player = new StreamingMediaPlayer(this);	
 	}
 
 	@Override
@@ -45,9 +45,6 @@ public class ApplicationController extends Application implements OnCompletionLi
 				player.stop();
 			}
 			player.release();
-			/*if (player.getMediaPlayer() != null && player.getMediaPlayer().isPlaying()) {
-    		player.getMediaPlayer().stop();
-    	    }*/
 		}
 	}
 
@@ -56,11 +53,14 @@ public class ApplicationController extends Application implements OnCompletionLi
 			try {
 				currentlyPlayingPodcast = position;
 				PodcastFeedEntry entry = (PodcastFeedEntry)fluPodcastsFeed.items.get(position);
-				Log.d(TAG, "Downloading " + entry.mp3url);
+				//Log.d(TAG, "Downloading " + entry.mp3url);
+				if (player.isPlaying()) {
+					player.stop();
+				}
 				player.reset();
+				playerIsPrepared = false;
 				player.setDataSource(entry.mp3url);
-				player.prepare();
-				//player.startStreaming(entry.mp3url);
+				player.prepareAsync();
 			}
 			catch (Exception e) {
 				Log.e(TAG, e.getMessage(), e);
@@ -73,26 +73,22 @@ public class ApplicationController extends Application implements OnCompletionLi
 		if (player.isPlaying()) {
 			player.stop();
 		}
-		/*if (player.getMediaPlayer() != null && player.getMediaPlayer().isPlaying()) {
-    	    player.interrupt();
-    	}*/
-
-		/*if (activityToUpdateOnPlayCompletion != null) {
-    	    activityToUpdateOnPlayCompletion.refreshList();
-    	}*/
 	}
 
 	public void onPrepared(MediaPlayer player) {
+		playerIsPrepared = true;
 		if (currentlyPlayingPodcast != null) {
 			player.start();
 		}
 	}
 
 	public void onCompletion(MediaPlayer player) {
-		currentlyPlayingPodcast = null;
+		if (playerIsPrepared && player.getDuration() > 0) {
+			currentlyPlayingPodcast = null;
 
-		if (activityToUpdateOnPlayCompletion != null) {
-			activityToUpdateOnPlayCompletion.refreshList();
+			if (activityToUpdateOnPlayCompletion != null) {
+				activityToUpdateOnPlayCompletion.refreshList();
+			}
 		}
 	}
 
