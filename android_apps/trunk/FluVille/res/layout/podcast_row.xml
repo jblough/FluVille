@@ -8,6 +8,8 @@
     android:src="@drawable/ic_media_play"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:layout_marginLeft="6dip"
+    android:layout_marginRight="6dip"
     android:layout_centerVertical="true" />
   <TextView android:id="@+id/podcast_title"
     android:text="Sample Title"
