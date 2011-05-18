@@ -55,6 +55,7 @@ import android.content.SharedPreferences;
 import android.content.DialogInterface.OnDismissListener;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.media.AudioManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -181,6 +182,10 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 
 	@Override
 	public void onLoadResources() {
+		// Tell Android that the volume control buttons should set the
+		//	media volume and not the ringer volume
+		this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
+      
 		this.mPlayerTexture = new Texture(256, 256, TextureOptions.DEFAULT);
 		this.mPlayerTextureRegion = TextureRegionFactory.createTiledFromAsset(this.mPlayerTexture, this, "gfx/rpg_sprite_walk.png", 0, 0, 8, 4); // 72x128
 
