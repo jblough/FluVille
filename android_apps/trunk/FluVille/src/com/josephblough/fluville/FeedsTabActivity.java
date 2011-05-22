@@ -3,6 +3,7 @@ package com.josephblough.fluville;
 import android.app.TabActivity;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TabHost;
@@ -15,6 +16,9 @@ public class FeedsTabActivity extends TabActivity {
 		super.onCreate(savedInstanceState);
 
 		Log.d(TAG, "onCreate");
+		// Tell Android that the volume control buttons should set the
+		//	media volume and not the ringer volume
+		this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
 		Resources res = getResources();
 		TabHost tabHost = getTabHost();
