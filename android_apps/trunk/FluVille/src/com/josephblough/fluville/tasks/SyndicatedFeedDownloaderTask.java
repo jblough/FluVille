@@ -30,6 +30,6 @@ public class SyndicatedFeedDownloaderTask extends AsyncTask<Void, Void, Syndicat
 
 	protected void onPostExecute(SyndicatedFeed result) {
 	    app.syndicatedFeeds.put(this.topic, result);
-		activity.notifyFeedsReady();
+		activity.updateCdcFeedsReadyFlag();
 	}
 }

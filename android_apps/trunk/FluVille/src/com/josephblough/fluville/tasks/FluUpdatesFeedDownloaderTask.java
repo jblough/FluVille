@@ -28,6 +28,6 @@ public class FluUpdatesFeedDownloaderTask extends AsyncTask<Void, Void, Feed> {
 
 	protected void onPostExecute(Feed result) {
 		app.fluUpdatesFeed = result;
-		activity.notifyFeedsReady();
+		activity.updateCdcFeedsReadyFlag();
 	}
 }

@@ -160,6 +160,7 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 	
 	private Integer lastWeeklyNewsFeed = null;
 	private boolean cdcFeedsReadyNotificationSent = false;
+	private boolean cdcFeedsReady = false;
 	
 	// ===========================================================
 	// Constructors
@@ -440,6 +441,9 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateImmunizationRateLabels();
 		((FluVilleCityHUD)mBoundChaseCamera.getHUD()).updateInfectionRateLabels();
 
+		if (!cdcFeedsReadyNotificationSent && cdcFeedsReady) {
+			notifyFeedsReady();
+		}
 
 		// On the first day of each week, display CDC news feeds
 		if (gameState.day % DAYS_BETWEEN_WEEKLY_NEWS == 0) {
@@ -1101,32 +1105,33 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 		return null;
 	}
 	
-	public synchronized void notifyFeedsReady() {
+	public synchronized void updateCdcFeedsReadyFlag() {
 		ApplicationController app = (ApplicationController)getApplicationContext();
 		if (app.fluPodcastsFeed != null && app.fluUpdatesFeed != null &&
 				app.syndicatedFeeds.get(SyndicatedFeed.CDC_PAGES_TOPIC_ID) != null &&
-				app.syndicatedFeeds.get(SyndicatedFeed.FLU_PAGES_TOPIC_ID) != null && 
-				!cdcFeedsReadyNotificationSent) {
-			
-			cdcFeedsReadyNotificationSent = true;
-			
-			runOnUiThread(new Runnable() {
+				app.syndicatedFeeds.get(SyndicatedFeed.FLU_PAGES_TOPIC_ID) != null) 
+			cdcFeedsReady = true;
+	}
+	
+	public void notifyFeedsReady() {
+		runOnUiThread(new Runnable() {
 
-				@Override
-				public void run() {
-					Toast toast = Toast.makeText(FluVilleCityActivity.this, getString(R.string.feeds_ready_notification), Toast.LENGTH_LONG);
-					toast.setGravity(Gravity.BOTTOM, 0, 0);
-					toast.show();
-				}
-			});
+			@Override
+			public void run() {
+				Toast toast = Toast.makeText(FluVilleCityActivity.this, getString(R.string.feeds_ready_notification), Toast.LENGTH_LONG);
+				toast.setGravity(Gravity.BOTTOM, 0, 0);
+				toast.show();
+			}
+		});
 
-			TMXObject flyer = findLandmark(MAP_LANDMARK_FLYER_1);
-			if (flyer != null)
-				showArrow((float)(flyer.getX() + (flyer.getWidth() / 2)), (float)(flyer.getY() + flyer.getHeight()), false);
-			flyer = findLandmark(MAP_LANDMARK_FLYER_2);
-			if (flyer != null)
-				showArrow((float)(flyer.getX() + (flyer.getWidth() / 2)), (float)(flyer.getY() + flyer.getHeight()), false);
-		}
+		TMXObject flyer = findLandmark(MAP_LANDMARK_FLYER_1);
+		if (flyer != null)
+			showArrow((float)(flyer.getX() + (flyer.getWidth() / 2)), (float)(flyer.getY() + flyer.getHeight()), false);
+		flyer = findLandmark(MAP_LANDMARK_FLYER_2);
+		if (flyer != null)
+			showArrow((float)(flyer.getX() + (flyer.getWidth() / 2)), (float)(flyer.getY() + flyer.getHeight()), false);
+
+		cdcFeedsReadyNotificationSent = true;
 	}
 	
 	private void presentInfectionRateStatistics() {

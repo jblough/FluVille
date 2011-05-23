@@ -27,6 +27,6 @@ public class FluPodcastsFeedDownloaderTask extends AsyncTask<Void, Void, Feed> {
 
 	protected void onPostExecute(Feed result) {
 	    app.fluPodcastsFeed = result;
-		activity.notifyFeedsReady();
+		activity.updateCdcFeedsReadyFlag();
 	}
 }
