@@ -176,6 +176,8 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 
 	@Override
 	public Engine onLoadEngine() {
+		displayDisclaimer();
+		
 		//this.mBoundChaseCamera = new ZoomCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
 		this.mBoundChaseCamera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
 		return new Engine(new EngineOptions(true, ScreenOrientation.LANDSCAPE, new RatioResolutionPolicy(CAMERA_WIDTH, CAMERA_HEIGHT), this.mBoundChaseCamera));
@@ -682,6 +684,31 @@ public class FluVilleCityActivity extends BaseGameActivity implements IOnSceneTo
 				mEngine.getScene().getLastChild().detachChild(arrow);
 			}
 		}));
+	}
+	
+	public void displayDisclaimer() {
+		final String disclaimerSetting = "shownDisclaimer";
+		final SharedPreferences preferences = this.getSharedPreferences(getClass().getName(), 0);
+		final boolean shownDisclaimer = preferences.getBoolean(disclaimerSetting, false);
+		if (!shownDisclaimer) {
+			AlertDialog.Builder alert = new AlertDialog.Builder(FluVilleCityActivity.this);
+			alert.setTitle("Disclaimer");
+			alert.setCancelable(false);
+			alert.setMessage(getString(R.string.disclaimer)).
+			setPositiveButton("Accept", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int id) {
+					SharedPreferences.Editor editor = preferences.edit();
+					editor.putBoolean(disclaimerSetting, true);
+					editor.commit();
+				}
+			}).
+			setNegativeButton("Decline", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int id) {
+					finish();
+				}
+			});
+			alert.show();
+		}
 	}
 	
 	public void retrievePreviouslyShownMessages() {
